@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧪 Página de Teste - Toolbar e Mapa</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 16px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        iframe {
+            width: 100%;
+            height: 600px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Testes da Barra de Ferramentas e Objetos do Mapa</h1>
+        
+        <div class="test-section">
+            <h2>📱 Aplicação Principal</h2>
+            <iframe src="http://localhost:3001" title="Map Editor"></iframe>
+        </div>
+
+        <div class="test-section">
+            <h2>🔧 Testes Automatizados</h2>
+            <button class="test-button" onclick="testeBasico()">🚀 Teste Básico</button>
+            <button class="test-button" onclick="testeDetalhado()">🔍 Teste Detalhado</button>
+            <button class="test-button" onclick="testeInteracao()">🎯 Teste Interação</button>
+            <button class="test-button" onclick="limparResultados()">🧹 Limpar</button>
+            <div id="resultados"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>📋 Checklist Manual</h2>
+            <div>
+                <label><input type="checkbox"> ✅ Mapa carrega corretamente</label><br>
+                <label><input type="checkbox"> ✅ Barra de ferramentas visível na parte inferior</label><br>
+                <label><input type="checkbox"> ✅ 5 botões com ícones presentes</label><br>
+                <label><input type="checkbox"> ✅ Tooltips funcionam ao passar o mouse</label><br>
+                <label><input type="checkbox"> ✅ Botões respondem a cliques</label><br>
+                <label><input type="checkbox"> ✅ Desenho no mapa funcional</label><br>
+                <label><input type="checkbox"> ✅ Estados visuais corretos</label><br>
+                <label><input type="checkbox"> ✅ Performance adequada</label><br>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>📊 Instruções</h2>
+            <ol>
+                <li><strong>Aguarde</strong> o mapa carregar completamente no iframe acima</li>
+                <li><strong>Execute</strong> os testes automatizados clicando nos botões</li>
+                <li><strong>Marque</strong> os itens do checklist conforme testa manualmente</li>
+                <li><strong>Interaja</strong> diretamente com o mapa no iframe para testar funcionalidades</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        function adicionarResultado(mensagem, tipo = 'info') {
+            const div = document.createElement('div');
+            div.className = `result ${tipo}`;
+            div.innerHTML = `${new Date().toLocaleTimeString()} - ${mensagem}`;
+            document.getElementById('resultados').appendChild(div);
+        }
+
+        function limparResultados() {
+            document.getElementById('resultados').innerHTML = '';
+        }
+
+        function testeBasico() {
+            adicionarResultado('🚀 Iniciando teste básico...', 'info');
+            
+            const iframe = document.querySelector('iframe');
+            if (!iframe) {
+                adicionarResultado('❌ Iframe não encontrado', 'error');
+                return;
+            }
+
+            try {
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                
+                // Testar elementos básicos
+                const botoes = iframeDoc.querySelectorAll('button');
+                const canvas = iframeDoc.querySelector('canvas');
+                
+                adicionarResultado(`🔍 Encontrados ${botoes.length} botões`, 'info');
+                adicionarResultado(`🗺️ Canvas do mapa: ${canvas ? 'Encontrado' : 'Não encontrado'}`, canvas ? 'success' : 'error');
+                
+                if (botoes.length >= 5) {
+                    adicionarResultado('✅ Número adequado de botões encontrados', 'success');
+                } else {
+                    adicionarResultado('⚠️ Poucos botões encontrados (esperado: 5+)', 'error');
+                }
+
+            } catch (e) {
+                adicionarResultado(`❌ Erro ao acessar iframe: ${e.message}`, 'error');
+                adicionarResultado('💡 Dica: Tente abrir http://localhost:3001 em uma nova aba e execute os testes lá', 'info');
+            }
+        }
+
+        function testeDetalhado() {
+            adicionarResultado('🔍 Iniciando teste detalhado...', 'info');
+            
+            const iframe = document.querySelector('iframe');
+            try {
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                
+                // Testar estrutura da página
+                const divs = iframeDoc.querySelectorAll('div');
+                const scripts = iframeDoc.querySelectorAll('script');
+                
+                adicionarResultado(`📦 Elementos div: ${divs.length}`, 'info');
+                adicionarResultado(`📜 Scripts: ${scripts.length}`, 'info');
+                
+                // Procurar por classes específicas
+                const toolbar = iframeDoc.querySelector('[data-testid="drawing-toolbar"]') ||
+                               iframeDoc.querySelector('.drawing-toolbar') ||
+                               iframeDoc.querySelector('div[style*="bottom"]');
+                
+                if (toolbar) {
+                    adicionarResultado('✅ Barra de ferramentas identificada', 'success');
+                } else {
+                    adicionarResultado('⚠️ Barra de ferramentas não identificada claramente', 'error');
+                }
+
+            } catch (e) {
+                adicionarResultado(`❌ Erro no teste detalhado: ${e.message}`, 'error');
+            }
+        }
+
+        function testeInteracao() {
+            adicionarResultado('🎯 Teste de interação iniciado...', 'info');
+            
+            const iframe = document.querySelector('iframe');
+            try {
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                const botoes = iframeDoc.querySelectorAll('button');
+                
+                if (botoes.length > 0) {
+                    // Simular clique no primeiro botão
+                    botoes[0].click();
+                    adicionarResultado('✅ Clique simulado no primeiro botão', 'success');
+                    
+                    // Verificar se há canvas para desenhar
+                    const canvas = iframeDoc.querySelector('canvas');
+                    if (canvas) {
+                        // Simular clique no canvas
+                        const rect = canvas.getBoundingClientRect();
+                        const event = new MouseEvent('click', {
+                            clientX: rect.left + rect.width / 2,
+                            clientY: rect.top + rect.height / 2,
+                            bubbles: true
+                        });
+                        canvas.dispatchEvent(event);
+                        adicionarResultado('✅ Clique simulado no mapa', 'success');
+                    }
+                } else {
+                    adicionarResultado('❌ Nenhum botão disponível para teste', 'error');
+                }
+
+            } catch (e) {
+                adicionarResultado(`❌ Erro na interação: ${e.message}`, 'error');
+            }
+        }
+
+        // Executar teste básico automaticamente após 3 segundos
+        setTimeout(() => {
+            adicionarResultado('🔄 Executando teste automático inicial...', 'info');
+            testeBasico();
+        }, 3000);
+    </script>
+</body>
+</html>

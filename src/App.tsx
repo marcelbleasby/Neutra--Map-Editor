@@ -1,25 +1,24 @@
 import React from 'react';
-import logo from './logo.svg';
+import { ChakraProvider, createSystem, defaultConfig } from '@chakra-ui/react';
+import { MapEditor } from './components/MapEditor';
 import './App.css';
+
+// Configuração do sistema do Chakra UI v3
+const system = createSystem(defaultConfig, {
+  theme: {
+    tokens: {
+      colors: {},
+    },
+  },
+});
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <ChakraProvider value={system}>
+      <div className="App">
+        <MapEditor />
+      </div>
+    </ChakraProvider>
   );
 }
 

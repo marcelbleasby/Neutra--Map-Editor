@@ -11,6 +11,14 @@ Este glossário fixa o vocabulário do produto; termos ainda em discussão não 
 Organização cadastrada na plataforma, identificada pelo `organization_id`. No editor, é um provedor dono da própria rede, que atende seus assinantes e pode compartilhar parte das portas com outras Empresas.
 _Avoid_: Organização (na interface), operadora neutra, cliente, conta, tenant
 
+**Projeto**:
+Recorte da rede de uma Empresa, escolhido por ela: uma cidade, várias, ou parte de uma. Um POP e tudo que ele alimenta ficam no mesmo projeto.
+_Avoid_: Mapa, rascunho, área
+
+**Topologia**:
+Dentro de um projeto, tudo que um mesmo POP alimenta. Não é cadastrada: decorre das ligações da rede.
+_Avoid_: Rede (para este sentido), malha, árvore
+
 ### Rede física
 
 **CTO**:
@@ -40,22 +48,22 @@ _Avoid_: Patch cord, jumper
 ### Rede neutra
 
 **Porta compartilhada**:
-Porta de atendimento de uma CTO que a Empresa dona da rede coloca à disposição de outra Empresa.
+Porta de atendimento específica de uma CTO que a Empresa dona da rede coloca à disposição de outra Empresa. É usada por no máximo uma Empresa por vez.
 _Avoid_: Porta cedida, porta alugada
 
 **Compartilhamento**:
-Uso de uma porta compartilhada por outra Empresa cadastrada na plataforma.
+Uso de uma porta compartilhada por outra Empresa, em decorrência de um pedido aceito no marketplace da plataforma. Não é criado no editor.
 _Avoid_: Cessão, locação, lease
 
 ### Atendimento
 
 **Cobertura**:
-Um endereço tem cobertura quando está dentro de uma área de cobertura da Empresa.
+Um endereço tem cobertura quando está dentro de uma área de cobertura da Empresa. É o que a plataforma chama de *feasibility*, e é tudo que a Empresa compradora enxerga.
 _Avoid_: Viabilidade (para este sentido)
 
 **Viabilidade**:
-Um endereço tem viabilidade quando há ao menos uma CTO com porta livre a até 250 m dele. Pode haver mais de uma CTO nessa condição.
-_Avoid_: Cobertura (para este sentido), disponibilidade
+Um endereço tem viabilidade quando há ao menos uma CTO com porta livre a até 250 m dele, em linha reta. Pode haver mais de uma CTO nessa condição. Só a Empresa dona da rede consulta.
+_Avoid_: Cobertura (para este sentido), disponibilidade, feasibility
 
 ### Edição
 

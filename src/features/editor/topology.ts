@@ -8,22 +8,25 @@ export type Projector = (position: Position) => { x: number; y: number };
 
 export const SNAP_TOLERANCE_PX = 14;
 
-function isEndpointNode(feature: ElementFeature): boolean {
-  return feature.geometry.type === "Point" && ELEMENTS[feature.properties.kind].cableEndpoint === true;
+type NodeRole = "cableEndpoint" | "passThrough";
+
+function samePosition(a: Position, b: Position): boolean {
+  return a[0] === b[0] && a[1] === b[1];
 }
 
-/** Nó mais próximo de `position` em que um cabo pode terminar, dentro da tolerância. */
-export function nearestEndpointNode(
+/** Nó mais próximo de `position` com o papel pedido, dentro da tolerância. */
+function nearestNode(
   position: Position,
   features: ElementFeature[],
   project: Projector,
-  tolerancePx = SNAP_TOLERANCE_PX,
+  role: NodeRole,
+  tolerancePx: number,
 ): ElementFeature | undefined {
   const target = project(position);
   let best: ElementFeature | undefined;
   let bestDistance = tolerancePx;
   for (const feature of features) {
-    if (!isEndpointNode(feature)) continue;
+    if (feature.geometry.type !== "Point" || !ELEMENTS[feature.properties.kind][role]) continue;
     const point = project(feature.geometry.coordinates as Position);
     const distance = Math.hypot(point.x - target.x, point.y - target.y);
     if (distance <= bestDistance) {
@@ -38,12 +41,17 @@ export interface SnappedCable {
   coordinates: Position[];
   fromNodeId?: Id;
   toNodeId?: Id;
+  /** Nós de passagem tocados pelos vértices intermediários, na ordem do traçado. */
+  viaNodeIds: Id[];
 }
 
 /**
- * Gruda as pontas de um cabo nos nós próximos e devolve a quais nós ele ficou
- * ligado. É isso que transforma um desenho em topologia: sem `fromNodeId` /
- * `toNodeId` o cabo é só uma linha.
+ * Gruda um cabo nos nós próximos e devolve a quais nós ele ficou ligado. É isso
+ * que transforma um desenho em topologia: sem `fromNodeId` / `toNodeId` o cabo é
+ * só uma linha.
+ *
+ * - As pontas grudam em nós onde cabo termina (POP, CEO, CTO, cliente).
+ * - Os vértices intermediários grudam em nós de passagem (poste, caixa, reserva).
  */
 export function snapCable(
   line: LineString,
@@ -53,26 +61,52 @@ export function snapCable(
 ): SnappedCable {
   const coordinates = line.coordinates.map((c) => [...c]);
   const last = coordinates.length - 1;
-  const from = nearestEndpointNode(coordinates[0], features, project, tolerancePx);
-  const to = nearestEndpointNode(coordinates[last], features, project, tolerancePx);
-  if (from) coordinates[0] = [...(from.geometry.coordinates as Position)];
+  const positionOf = (node: ElementFeature) => [...(node.geometry.coordinates as Position)];
+
+  const from = nearestNode(coordinates[0], features, project, "cableEndpoint", tolerancePx);
+  const to = nearestNode(coordinates[last], features, project, "cableEndpoint", tolerancePx);
+  if (from) coordinates[0] = positionOf(from);
   // Um cabo não liga um nó a ele mesmo.
   const toNode = to && to.id !== from?.id ? to : undefined;
-  if (toNode) coordinates[last] = [...(toNode.geometry.coordinates as Position)];
-  return { coordinates, fromNodeId: from?.id, toNodeId: toNode?.id };
+  if (toNode) coordinates[last] = positionOf(toNode);
+
+  const viaNodeIds: Id[] = [];
+  for (let i = 1; i < last; i++) {
+    const via = nearestNode(coordinates[i], features, project, "passThrough", tolerancePx);
+    if (!via) continue;
+    coordinates[i] = positionOf(via);
+    if (!viaNodeIds.includes(via.id)) viaNodeIds.push(via.id);
+  }
+
+  return { coordinates, fromNodeId: from?.id, toNodeId: toNode?.id, viaNodeIds };
 }
 
-/** Cabos ligados a um nó, com as pontas reposicionadas para a nova posição dele. */
-export function followNode(node: ElementFeature, features: ElementFeature[]): ElementFeature[] {
+/**
+ * Cabos ligados a um nó que foi movido, com os vértices reposicionados.
+ * `previousPosition` é onde o nó estava: é assim que se encontra o vértice de
+ * passagem que deve acompanhá-lo.
+ */
+export function followNode(
+  node: ElementFeature,
+  previousPosition: Position | undefined,
+  features: ElementFeature[],
+): ElementFeature[] {
   const position = node.geometry.coordinates as Position;
   const moved: ElementFeature[] = [];
   for (const feature of features) {
     if (feature.geometry.type !== "LineString") continue;
-    const { fromNodeId, toNodeId } = feature.properties;
-    if (fromNodeId !== node.id && toNodeId !== node.id) continue;
+    const { fromNodeId, toNodeId, viaNodeIds } = feature.properties;
+    const isVia = viaNodeIds?.includes(node.id) ?? false;
+    if (fromNodeId !== node.id && toNodeId !== node.id && !isVia) continue;
     const coordinates = feature.geometry.coordinates.map((c) => [...c]);
+    const last = coordinates.length - 1;
     if (fromNodeId === node.id) coordinates[0] = [...position];
-    if (toNodeId === node.id) coordinates[coordinates.length - 1] = [...position];
+    if (toNodeId === node.id) coordinates[last] = [...position];
+    if (isVia && previousPosition) {
+      for (let i = 1; i < last; i++) {
+        if (samePosition(coordinates[i], previousPosition)) coordinates[i] = [...position];
+      }
+    }
     moved.push({ ...feature, geometry: { type: "LineString", coordinates } });
   }
   return moved;
@@ -83,16 +117,19 @@ export function detachNodes(removedIds: Id[], features: ElementFeature[]): Eleme
   const removed = new Set(removedIds);
   const changed: ElementFeature[] = [];
   for (const feature of features) {
-    const { fromNodeId, toNodeId } = feature.properties;
+    const { fromNodeId, toNodeId, viaNodeIds } = feature.properties;
     const dropFrom = fromNodeId !== undefined && removed.has(fromNodeId);
     const dropTo = toNodeId !== undefined && removed.has(toNodeId);
-    if (!dropFrom && !dropTo) continue;
+    const keptVia = viaNodeIds?.filter((id) => !removed.has(id));
+    const dropVia = keptVia !== undefined && keptVia.length !== viaNodeIds?.length;
+    if (!dropFrom && !dropTo && !dropVia) continue;
     changed.push({
       ...feature,
       properties: {
         ...feature.properties,
         fromNodeId: dropFrom ? undefined : fromNodeId,
         toNodeId: dropTo ? undefined : toNodeId,
+        viaNodeIds: keptVia,
       },
     });
   }

@@ -3,6 +3,7 @@
 import MapboxDraw from "@mapbox/mapbox-gl-draw";
 import turfLength from "@turf/length";
 import mapboxgl from "mapbox-gl";
+import type { Position } from "geojson";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ELEMENTS } from "@/domain/catalog";
 import type { ElementKind, Id, Project } from "@/domain/types";
@@ -28,6 +29,7 @@ const DRAW_MODE = {
 export function useNetworkEditor(project: Project, accessToken: string) {
   const containerRef = useRef<HTMLDivElement>(null);
   const drawRef = useRef<MapboxDraw | null>(null);
+  const mapRef = useRef<mapboxgl.Map | null>(null);
   const pendingKindRef = useRef<ElementKind | null>(null);
 
   const [features, setFeatures] = useState<ElementFeature[]>([]);
@@ -55,6 +57,11 @@ export function useNetworkEditor(project: Project, accessToken: string) {
     map.addControl(new mapboxgl.NavigationControl(), "bottom-right");
     map.addControl(new mapboxgl.ScaleControl({ unit: "metric" }), "bottom-left");
     drawRef.current = draw;
+    mapRef.current = map;
+
+    // Posição de cada nó no último estado salvo: ao mover um poste, é por ela que
+    // se acha o vértice do cabo que deve acompanhá-lo.
+    const lastPositions = new Map<Id, Position>();
 
     const projector: Projector = (position) => map.project(position as [number, number]);
 
@@ -62,10 +69,19 @@ export function useNetworkEditor(project: Project, accessToken: string) {
     const elements = () =>
       (draw.getAll().features as ElementFeature[]).filter((feature) => feature.properties?.kind);
 
-    const commit = () => {
+    /** Atualiza o espelho em estado React sem gravar. */
+    const mirror = () => {
       const current = elements();
+      lastPositions.clear();
+      for (const feature of current) {
+        if (feature.geometry.type === "Point") lastPositions.set(feature.id, feature.geometry.coordinates);
+      }
       setFeatures(current);
-      saveFeatures(project.id, { type: "FeatureCollection", features: current });
+      return current;
+    };
+
+    const commit = () => {
+      saveFeatures(project.id, { type: "FeatureCollection", features: mirror() });
     };
 
     /** Gruda as pontas nos nós próximos e recalcula o comprimento. */
@@ -80,6 +96,7 @@ export function useNetworkEditor(project: Project, accessToken: string) {
           ...cable.properties,
           fromNodeId: snapped.fromNodeId,
           toNodeId: snapped.toNodeId,
+          viaNodeIds: snapped.viaNodeIds,
           lengthMeters: Math.round(
             turfLength({ type: "Feature", geometry, properties: {} }, { units: "kilometers" }) * 1000,
           ),
@@ -89,7 +106,7 @@ export function useNetworkEditor(project: Project, accessToken: string) {
 
     map.on("load", () => {
       draw.set(loadFeatures(project.id));
-      setFeatures(elements());
+      mirror();
     });
 
     map.on("error", (event) => {
@@ -114,7 +131,8 @@ export function useNetworkEditor(project: Project, accessToken: string) {
       for (const updated of event.features as ElementFeature[]) {
         const others = elements().filter((feature) => feature.id !== updated.id);
         if (updated.geometry.type === "Point") {
-          for (const cable of followNode(updated, others)) draw.add(settleCable(cable, elements()));
+          const previous = lastPositions.get(updated.id);
+          for (const cable of followNode(updated, previous, others)) draw.add(settleCable(cable, elements()));
         } else {
           draw.add(settleCable(updated, others));
         }
@@ -143,6 +161,7 @@ export function useNetworkEditor(project: Project, accessToken: string) {
 
     return () => {
       drawRef.current = null;
+      mapRef.current = null;
       map.remove();
     };
   }, [project, accessToken]);
@@ -172,6 +191,26 @@ export function useNetworkEditor(project: Project, accessToken: string) {
     [project.id],
   );
 
+  /** Seleciona um elemento e leva o mapa até ele (usado pela lista de pendências). */
+  const selectElement = useCallback((id: Id) => {
+    const draw = drawRef.current;
+    const feature = draw?.get(id) as ElementFeature | undefined;
+    if (!draw || !feature) return;
+    pendingKindRef.current = null;
+    setTool(null);
+    // changeMode pela API não dispara draw.selectionchange.
+    draw.changeMode("simple_select", { featureIds: [id] });
+    setSelectedId(id);
+    const { geometry } = feature;
+    const anchor =
+      geometry.type === "Point"
+        ? geometry.coordinates
+        : geometry.type === "LineString"
+          ? geometry.coordinates[Math.floor(geometry.coordinates.length / 2)]
+          : geometry.coordinates[0][0];
+    mapRef.current?.easeTo({ center: anchor as [number, number] });
+  }, []);
+
   const deleteSelected = useCallback(() => {
     // `trash` dispara draw.delete, que cuida de desligar cabos e persistir.
     drawRef.current?.trash();
@@ -184,6 +223,7 @@ export function useNetworkEditor(project: Project, accessToken: string) {
     tool,
     mapError,
     selectTool,
+    selectElement,
     updateProperties,
     deleteSelected,
   };

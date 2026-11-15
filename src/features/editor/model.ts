@@ -25,10 +25,14 @@ export interface ElementProperties {
   // Cabos
   fromNodeId?: Id;
   toNodeId?: Id;
+  /** Postes, caixas e reservas por onde o cabo passa sem ser aberto. */
+  viaNodeIds?: Id[];
   fiberCount?: number;
   lengthMeters?: number;
-  // CTO
+  // CTO: as portas são as saídas do splitter de 2º nível.
   ports?: CtoPort[];
+  // CEO: razão do splitter de 1º nível (ausente ou 0 = só emenda).
+  splitRatio?: number;
 }
 
 export type ElementGeometry = Point | LineString | Polygon;

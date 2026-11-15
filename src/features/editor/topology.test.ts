@@ -34,6 +34,7 @@ describe("snapCable", () => {
       coordinates: [[0, 0], [0.5, 0.2], [1, 0]],
       fromNodeId: "ceo",
       toNodeId: "cto",
+      viaNodeIds: [],
     });
   });
 
@@ -43,6 +44,7 @@ describe("snapCable", () => {
       coordinates: line.coordinates,
       fromNodeId: undefined,
       toNodeId: undefined,
+      viaNodeIds: [],
     });
   });
 
@@ -61,7 +63,7 @@ describe("followNode / detachNodes", () => {
   ];
 
   it("move só as pontas dos cabos ligados ao nó", () => {
-    const moved = followNode(node("cto", "cto", 2, 2), cables);
+    const moved = followNode(node("cto", "cto", 2, 2), [1, 0], cables);
     expect(moved.map((f) => f.id)).toEqual(["a"]);
     expect(moved[0].geometry.coordinates).toEqual([[0, 0], [2, 2]]);
   });
@@ -70,6 +72,33 @@ describe("followNode / detachNodes", () => {
     const changed = detachNodes(["ceo"], cables);
     expect(changed).toHaveLength(1);
     expect(changed[0].properties).toMatchObject({ fromNodeId: undefined, toNodeId: "cto" });
+  });
+});
+
+describe("nós de passagem", () => {
+  const nodes = [node("ceo", "ceo", 0, 0), node("cto", "cto", 1, 0), node("poste", "pole", 0.5, 0.2)];
+
+  it("gruda o vértice intermediário no poste e registra a passagem", () => {
+    const line = { type: "LineString" as const, coordinates: [[0, 0], [0.505, 0.195], [1, 0]] };
+    const snapped = snapCable(line, nodes, project);
+    expect(snapped.coordinates[1]).toEqual([0.5, 0.2]);
+    expect(snapped.viaNodeIds).toEqual(["poste"]);
+  });
+
+  it("a ponta do cabo não gruda em poste", () => {
+    const line = { type: "LineString" as const, coordinates: [[0.5, 0.2], [1, 0]] };
+    expect(snapCable(line, nodes, project).fromNodeId).toBeUndefined();
+  });
+
+  it("o vértice acompanha o poste movido e some da passagem quando o poste é excluído", () => {
+    const passing = cable("a", [[0, 0], [0.5, 0.2], [1, 0]], {
+      fromNodeId: "ceo",
+      toNodeId: "cto",
+      viaNodeIds: ["poste"],
+    });
+    const moved = followNode(node("poste", "pole", 0.6, 0.3), [0.5, 0.2], [passing]);
+    expect(moved[0].geometry.coordinates).toEqual([[0, 0], [0.6, 0.3], [1, 0]]);
+    expect(detachNodes(["poste"], [passing])[0].properties.viaNodeIds).toEqual([]);
   });
 });
 

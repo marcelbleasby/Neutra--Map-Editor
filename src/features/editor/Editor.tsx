@@ -42,7 +42,7 @@ function exportGeoJson(project: Project, features: ElementFeature[]) {
 }
 
 function Workspace({ project }: { project: Project }) {
-  const { containerRef, features, selected, tool, mapError, selectTool, updateProperties, deleteSelected } =
+  const { containerRef, features, selected, tool, mapError, selectTool, selectElement, updateProperties, deleteSelected } =
     useNetworkEditor(project, MAPBOX_TOKEN);
 
   return (
@@ -81,6 +81,7 @@ function Workspace({ project }: { project: Project }) {
             selected={selected}
             providers={DEMO_PROVIDERS}
             onChange={updateProperties}
+            onSelect={selectElement}
             onDelete={deleteSelected}
           />
         </aside>

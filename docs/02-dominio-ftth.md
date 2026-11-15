@@ -74,26 +74,26 @@ qual fibra foi fundida com qual.
 
 ## Regras
 
-**Físicas (já aplicadas pelo editor):**
+O detalhe de cada regra, e o que já está implementado, está em `docs/10-topologia.md`.
 
-- Cabo só termina em POP, CEO, CTO ou cliente (`cableEndpoint` no catálogo).
-- Um cabo não liga um nó a ele mesmo.
-- Mover um nó move as pontas dos cabos ligados a ele; excluir um nó desliga os cabos.
-- Comprimento do cabo é medido pelo traçado, em metros.
+**Físicas:**
 
-**Físicas (a implementar):**
-
-- Backbone não termina em cliente; drop sai de CTO e termina em cliente.
+- A ponta de um cabo só gruda em POP, CEO, CTO ou cliente; um cabo não liga um nó a
+  ele mesmo.
+- Backbone termina em POP ou CEO; distribuição, em POP, CEO ou CTO; drop liga uma
+  CTO a um cliente.
 - Poste, caixa subterrânea e reserva são pontos de passagem (`viaNodeIds`), não pontas.
-- Comprimento real = traçado + reservas técnicas + sobra por caixa.
+- Mover um nó move os cabos ligados a ele; excluir um nó desliga os cabos.
+- Comprimento do cabo é medido pelo traçado, em metros. O real soma reservas e sobras
+  (a implementar).
 
-**Ópticas (a implementar com o diagrama de fusões):**
+**Ópticas:**
 
-- Cada ponta de fibra e cada porta participa de no máximo uma conexão.
+- Cada ponta de fibra e cada porta participa de no máximo uma conexão por nó (posição
+  de DIO, duas).
 - Conexão só une pontas presentes no mesmo nó.
-- O caminho de uma porta de CTO até a OLT tem exatamente uma porta PON na origem.
+- O caminho de uma porta de CTO até a OLT termina em exatamente uma porta PON.
 - Atenuação total do caminho ≤ orçamento da classe do transceptor (GPON B+: 28 dB).
-  Cálculo em `pathLossDb` (`src/domain/optics.ts`).
 
 **Comerciais (rede neutra):**
 

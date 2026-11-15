@@ -1,4 +1,4 @@
-import type { ElementKind, LifecycleStatus, PortStatus } from "./types";
+import type { CableKind, ElementKind, LifecycleStatus, NodeKind, PortStatus } from "./types";
 
 export type GeometryType = "Point" | "LineString" | "Polygon";
 
@@ -13,6 +13,8 @@ export interface ElementDefinition {
   description: string;
   /** Um cabo pode terminar neste tipo de nó. */
   cableEndpoint?: boolean;
+  /** O cabo passa por este tipo de nó sem ser aberto (poste, caixa, reserva). */
+  passThrough?: boolean;
 }
 
 /**
@@ -54,6 +56,7 @@ export const ELEMENTS: Record<ElementKind, ElementDefinition> = {
     prefix: "PST",
     color: "#64748b",
     description: "Ponto de fixação do cabo aéreo",
+    passThrough: true,
   },
   chamber: {
     kind: "chamber",
@@ -62,6 +65,7 @@ export const ELEMENTS: Record<ElementKind, ElementDefinition> = {
     prefix: "CS",
     color: "#78716c",
     description: "Caixa de passagem em rede subterrânea",
+    passThrough: true,
   },
   reserve: {
     kind: "reserve",
@@ -70,6 +74,7 @@ export const ELEMENTS: Record<ElementKind, ElementDefinition> = {
     prefix: "RT",
     color: "#0891b2",
     description: "Sobra de cabo para manutenção",
+    passThrough: true,
   },
   customer: {
     kind: "customer",
@@ -144,6 +149,19 @@ export const PORT_STATUS_COLORS: Record<PortStatus, string> = {
   defective: "#ef4444",
 };
 
-export function isCableKind(kind: ElementKind): boolean {
+/**
+ * Em que tipos de nó cada cabo pode terminar. Um drop liga exatamente uma CTO a
+ * um cliente; os demais aceitam qualquer combinação dos tipos listados.
+ */
+export const CABLE_ENDPOINTS: Record<CableKind, NodeKind[]> = {
+  cable_backbone: ["pop", "ceo"],
+  cable_distribution: ["pop", "ceo", "cto"],
+  cable_drop: ["cto", "customer"],
+};
+
+/** Razões de splitter aceitas em CEO (1º nível). 0 = caixa só de emenda. */
+export const CEO_SPLIT_OPTIONS = [0, 2, 4, 8, 16] as const;
+
+export function isCableKind(kind: ElementKind): kind is CableKind {
   return ELEMENTS[kind].geometry === "LineString";
 }

@@ -4,6 +4,9 @@
 
 - Next.js + Mapbox GL Draw; projetos; desenho de nós, cabos e áreas.
 - Encaixe de cabos nos nós, comprimento automático, portas de CTO por provedor.
+- Topologia física: regras de ligação, pontos de passagem, rota até o POP, impacto de
+  falha por provedor, orçamento óptico estimado e lista de pendências.
+- Motor do grafo óptico (fibras, portas, conexões, rastreamento até a PON), sem tela.
 - Persistência local, exportação GeoJSON.
 - Modelo de domínio completo em `src/domain/types.ts`.
 
@@ -25,11 +28,14 @@ Ver `docs/07-integracao-geo.md`.
 
 ## Fase 2 — Topologia óptica
 
-- Equipamentos dentro dos nós (OLT, DIO, splitter) e suas portas.
-- Fibras geradas a partir dos cabos, com tubos e cores.
-- Diagrama de fusões por caixa.
-- Caminho óptico porta PON → ONU e cálculo de potência.
-- Regras físicas restantes (tipo de cabo × tipo de nó, pontos de passagem).
+Ver `docs/10-topologia.md`. O motor já existe (`src/domain/opticalGraph.ts`); falta
+a interface.
+
+- Cadastro de equipamentos dentro dos nós (OLT, DIO, splitter) e suas portas.
+- Diagrama de fusões por caixa, com tubos e fibras em cor.
+- Rastreamento exato substituindo a estimativa onde houver fusões; sentido inverso
+  (da PON aos assinantes).
+- Sangria, reserva técnica no comprimento, dividir e unir cabos.
 
 ## Fase 3 — Rede neutra e assinantes
 

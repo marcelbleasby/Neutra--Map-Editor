@@ -22,6 +22,7 @@ dono na plataforma.
 | Entidades e relacionamentos | `docs/03-modelo-de-dados.md` + `src/domain/types.ts` |
 | Stack, estrutura, mapa, SNMP e notificações | `docs/04-arquitetura.md` |
 | Fases e decisões em aberto | `docs/05-roadmap.md` |
+| Funcionalidades de topologia: o que existe e o que falta | `docs/10-topologia.md` |
 | O que o coletor SNMP entrega e o que falta | `docs/06-integracao-snmp.md` |
 | O que a API de viabilidade entrega e o que falta | `docs/07-integracao-geo.md` |
 | O que o serviço de notificações entrega e o que falta | `docs/08-integracao-notificacoes.md` |
@@ -45,6 +46,9 @@ npm run build
 ```
 src/domain/             regras e tipos puros — sem React, sem Mapbox, sem I/O
 src/features/editor/    editor de mapa (Mapbox GL Draw) e seus painéis
+  topology.ts           encaixe de cabos em nós e pontos de passagem
+  network.ts            grafo físico: rota até o POP, impacto, pendências
+src/domain/opticalGraph.ts  grafo óptico: fibras, conexões, rastreamento até a PON
 src/features/projects/  lista e criação de projetos
 src/lib/storage.ts      única porta de entrada para persistência (hoje localStorage)
 src/app/                rotas; páginas só compõem features
@@ -59,7 +63,10 @@ src/app/                rotas; páginas só compõem features
   não repita cor nem rótulo em componente.
 - **Topologia é dado, não desenho:** um cabo só faz parte da rede quando tem
   `fromNodeId`/`toNodeId`. Toda regra de conexão fica em função pura
-  (`features/editor/topology.ts`, `domain/optics.ts`) com teste.
+  (`features/editor/topology.ts`, `features/editor/network.ts`,
+  `domain/opticalGraph.ts`) com teste.
+- **Regra violada vira pendência, não bloqueio.** O desenho passa por estados
+  incompletos; `findIssues` aponta o que corrigir.
 - **Persistência só via `src/lib/storage.ts`.** Componentes não tocam em `localStorage`
   nem fazem `fetch` direto; isso mantém a troca pela API contida em um arquivo.
 - **Escopo por projeto:** todo registro de rede carrega `projectId`; todo projeto,

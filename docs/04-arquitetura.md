@@ -27,10 +27,12 @@ src/
     types.ts           entidades (referência canônica)
     catalog.ts         tipos de elemento: rótulo, cor, geometria, prefixo
     optics.ts          perdas, orçamento óptico, cores de fibra
+    opticalGraph.ts    fibras, conexões e rastreamento até a porta PON
   features/
     editor/
       useNetworkEditor.ts  liga Mapbox GL Draw ao modelo
       topology.ts          encaixe de cabos, seguir nó, desligar nó (puro)
+      network.ts           rota até o POP, impacto, pendências (puro)
       model.ts             formato das features, nomes, resumo (puro)
       drawStyles.ts        estilos do Draw derivados do catálogo
       Editor.tsx, Palette.tsx, Inspector.tsx

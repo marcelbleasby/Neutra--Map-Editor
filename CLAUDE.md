@@ -50,6 +50,7 @@ src/features/editor/    editor de mapa (Mapbox GL Draw) e seus painéis
   topology.ts           encaixe de cabos em nós e pontos de passagem
   network.ts            grafo físico: rota até o POP, impacto, pendências
 src/domain/opticalGraph.ts  grafo óptico: fibras, conexões, rastreamento até a PON
+src/features/diagram/   diagrama de ligações por nó: modelo, layout e desenho (SVG)
 src/features/import/    importação de KML/KMZ: leitura, classificação, revisão, montagem
 src/features/projects/  lista e criação de projetos
 src/lib/storage.ts      única porta de entrada para persistência (hoje localStorage)

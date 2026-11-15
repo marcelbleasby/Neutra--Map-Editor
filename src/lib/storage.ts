@@ -1,4 +1,5 @@
 import type { Company, Id, Project, Provider } from "@/domain/types";
+import { EMPTY_OPTICAL, type OpticalData } from "@/features/diagram/model";
 import { EMPTY_COLLECTION, type ElementCollection } from "@/features/editor/model";
 
 /**
@@ -11,6 +12,7 @@ import { EMPTY_COLLECTION, type ElementCollection } from "@/features/editor/mode
 
 const PROJECTS_KEY = "neutra:projects";
 const featuresKey = (projectId: Id) => `neutra:features:${projectId}`;
+const opticalKey = (projectId: Id) => `neutra:optical:${projectId}`;
 
 /** Empresa e provedores fixos até existir autenticação e cadastro. */
 export const DEMO_COMPANY: Company = { id: "company-demo", name: "Operadora Neutra Demo" };
@@ -68,6 +70,7 @@ export function deleteProject(projectId: Id) {
   );
   try {
     window.localStorage.removeItem(featuresKey(projectId));
+    window.localStorage.removeItem(opticalKey(projectId));
   } catch {
     // ver write()
   }
@@ -86,4 +89,13 @@ export function saveFeatures(projectId: Id, collection: ElementCollection): bool
     listProjects().map((project) => (project.id === projectId ? { ...project, updatedAt: now } : project)),
   );
   return true;
+}
+
+/** Equipamentos e ligações do diagrama de cada nó (ver src/features/diagram). */
+export function loadOptical(projectId: Id): OpticalData {
+  return read<OpticalData>(opticalKey(projectId), EMPTY_OPTICAL);
+}
+
+export function saveOptical(projectId: Id, data: OpticalData): boolean {
+  return write(opticalKey(projectId), data);
 }

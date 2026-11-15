@@ -23,6 +23,8 @@ Abra http://localhost:3000, crie um projeto e desenhe a rede.
 - Importação de KML/KMZ, na criação do projeto ou dentro do editor: os elementos são
   reconhecidos pelo nome, revisados em grupos e a topologia é montada automaticamente.
 - Portas da CTO com situação, provedor e cliente.
+- Diagrama de ligações de cada POP, CEO e CTO: fibras em cor, OLT, DIO e splitters,
+  ligação por clique e caminho do sinal até a porta PON.
 - Topologia: caminho de cada ponto até o POP, o que cai se um elemento falhar (com os
   provedores afetados), orçamento óptico estimado e lista de pendências do desenho.
 - Resumo do projeto (contagem, metragem de cabo, ocupação de portas) e exportação GeoJSON.

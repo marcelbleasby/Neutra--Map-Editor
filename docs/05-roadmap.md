@@ -6,7 +6,9 @@
 - Encaixe de cabos nos nós, comprimento automático, portas de CTO por provedor.
 - Topologia física: regras de ligação, pontos de passagem, rota até o POP, impacto de
   falha por provedor, orçamento óptico estimado e lista de pendências.
-- Motor do grafo óptico (fibras, portas, conexões, rastreamento até a PON), sem tela.
+- Grafo óptico: fibras, portas, conexões e rastreamento até a PON.
+- Diagrama de ligações por POP, CEO e CTO, com fibras em cor, equipamentos e caminho
+  do sinal.
 - Importação de KML/KMZ com classificação pelo nome e montagem da topologia
   (`docs/11-fluxos-de-entrada.md`).
 - Persistência local, exportação GeoJSON.
@@ -30,14 +32,12 @@ Ver `docs/07-integracao-geo.md`.
 
 ## Fase 2 — Topologia óptica
 
-Ver `docs/10-topologia.md`. O motor já existe (`src/domain/opticalGraph.ts`); falta
-a interface.
+Ver `docs/10-topologia.md`. O diagrama de ligações já existe; falta:
 
-- Cadastro de equipamentos dentro dos nós (OLT, DIO, splitter) e suas portas.
-- Diagrama de fusões por caixa, com tubos e fibras em cor.
-- Rastreamento exato substituindo a estimativa onde houver fusões; sentido inverso
-  (da PON aos assinantes).
-- Sangria, reserva técnica no comprimento, dividir e unir cabos.
+- Ligar várias fibras de uma vez e destacar no mapa o caminho rastreado.
+- Sentido inverso (da PON às CTOs e assinantes) e ocupação de fibras por cabo.
+- Valor exato no lugar da estimativa nas pendências, onde houver fusões.
+- ONU no cliente; sangria; reserva técnica no comprimento; dividir e unir cabos.
 
 ## Fase 3 — Rede neutra e assinantes
 

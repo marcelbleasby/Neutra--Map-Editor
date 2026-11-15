@@ -9,7 +9,9 @@ import {
   STATUS_LABELS,
   isCableKind,
 } from "@/domain/catalog";
+import type { OpticalModel } from "@/domain/opticalGraph";
 import type { Id, LifecycleStatus, PortStatus, Provider } from "@/domain/types";
+import { describeTrace, nodeHasDiagram, traceCto } from "@/features/diagram/model";
 import {
   CTO_PORT_OPTIONS,
   makeCtoPorts,
@@ -357,6 +359,31 @@ function TopologySection({
   );
 }
 
+/** Quantas ligações o nó tem e, na CTO, se o sinal chega até uma OLT pelas fusões. */
+function OpticalSummary({
+  node,
+  optical,
+  nameOf,
+}: {
+  node: ElementFeature;
+  optical: OpticalModel;
+  nameOf: (id?: Id) => string;
+}) {
+  const count = optical.connections.filter((connection) => connection.nodeId === node.id).length;
+  const equipment = optical.equipment.filter((item) => item.nodeId === node.id).length;
+  const trace = node.properties.kind === "cto" ? traceCto(node.id, optical) : null;
+  return (
+    <div className="flex flex-col gap-1 text-sm text-slate-700">
+      <p>
+        {equipment} {equipment === 1 ? "equipamento" : "equipamentos"}, {count} {count === 1 ? "ligação" : "ligações"}.
+      </p>
+      {trace && count > 0 && (
+        <p className={trace.complete ? "text-green-700" : "text-amber-800"}>{describeTrace(trace, optical, nameOf)}</p>
+      )}
+    </div>
+  );
+}
+
 export function Inspector({
   features,
   selected,
@@ -364,6 +391,8 @@ export function Inspector({
   onChange,
   onSelect,
   onDelete,
+  optical,
+  onOpenDiagram,
 }: {
   features: ElementFeature[];
   selected: ElementFeature | null;
@@ -371,6 +400,8 @@ export function Inspector({
   onChange: (id: Id, patch: Partial<ElementProperties>) => void;
   onSelect: (id: Id) => void;
   onDelete: () => void;
+  optical: OpticalModel;
+  onOpenDiagram: (id: Id) => void;
 }) {
   const analysis = analyzeNetwork(features);
 
@@ -467,6 +498,20 @@ export function Inspector({
           providers={providers}
           onChange={(ports) => onChange(id, { ports })}
         />
+      )}
+
+      {nodeHasDiagram(selected) && (
+        <section className={SECTION}>
+          <h3 className={HEADING}>Ligações</h3>
+          <OpticalSummary node={selected} optical={optical} nameOf={nameOf} />
+          <button
+            type="button"
+            onClick={() => onOpenDiagram(id)}
+            className="mt-2 w-full rounded-md bg-slate-900 px-2 py-1.5 text-sm font-medium text-white hover:bg-slate-700"
+          >
+            Abrir diagrama de ligações
+          </button>
+        </section>
       )}
 
       <TopologySection

@@ -10,8 +10,8 @@ em `docs/02-dominio-ftth.md`.
 | **Físico** | Por onde o cabo passa? O que cai se este poste cair? | Nós e cabos no mapa | `src/features/editor/topology.ts`, `network.ts` |
 | **Óptico** | Este assinante está em qual porta PON? Qual a potência exata aqui? | Fibras, portas e conexões dentro dos nós | `src/domain/opticalGraph.ts` |
 
-O nível físico é desenhado no mapa e já está na interface. O nível óptico tem o motor
-pronto e testado, mas ainda não tem tela — é o diagrama de fusões.
+O nível físico é desenhado no mapa. O nível óptico é editado no **diagrama de
+ligações** de cada POP, CEO e CTO (`src/features/diagram/`).
 
 O nível físico dá respostas **estimadas** (supõe que tudo que entra numa caixa está
 ligado); o óptico dá respostas **exatas** (segue cada fusão). Enquanto uma caixa não
@@ -134,17 +134,52 @@ outra ponta do cabo, e assim por diante. Devolve:
 É o que responde "este assinante está em qual PON" e o que liga uma leitura de
 potência do coletor SNMP a um ponto do mapa.
 
+### Diagrama de ligações
+
+Aberto pelo botão "Abrir diagrama de ligações" ao selecionar um POP, uma CEO ou uma
+CTO. Mostra, em três faixas:
+
+| Nó | Esquerda | Meio | Direita |
+| --- | --- | --- | --- |
+| POP | OLTs | DIOs e splitters | Cabos |
+| CEO, CTO | Cabo de entrada (o que vem do POP) | Splitters | Demais cabos |
+
+- **Cabos** aparecem com todas as fibras, numeradas, com a cor ABNT da fibra e uma
+  faixa com a cor do tubo.
+- **Equipamentos** aparecem com suas portas. OLT, DIO e splitters extras são
+  adicionados no próprio diagrama. O splitter da CTO (uma saída por porta de
+  atendimento) e o de 1º nível da CEO vêm das propriedades do mapa e não são
+  cadastrados de novo.
+- **Ligar:** clicar em uma ponta e depois em outra. O tipo é decidido pelas pontas:
+  fibra com fibra ou com splitter é fusão; fibra com DIO ou OLT é conector; porta com
+  porta é cordão. A linha leva a cor da fibra.
+- **Consultar:** clicar em uma ponta ligada mostra com quem ela está ligada, permite
+  desligar e, se for uma porta, mostra o caminho do sinal até a OLT — ou onde ele
+  para.
+- Uma ligação que viola as regras acima é recusada com a explicação.
+
+No painel do mapa, o nó mostra quantos equipamentos e ligações tem; a CTO mostra
+também se o sinal chega a uma OLT pelas fusões, com comprimento, divisão e
+atenuação exatos.
+
+Os dados do diagrama ficam separados dos do mapa (`loadOptical` / `saveOptical` em
+`src/lib/storage.ts`). Ligações que perdem o sentido — cabo excluído, cabo com menos
+fibras, nó removido — são descartadas ao montar o modelo (`buildOpticalModel`).
+
 ### O que falta
 
-| Funcionalidade | Depende de |
+| Funcionalidade | Observação |
 | --- | --- |
-| Cadastro de equipamentos e portas dentro do nó | Tela |
-| Diagrama de fusões por caixa (cabos, tubos, fibras em cor, splitters, ligações) | Tela |
-| Rastreamento exato substituindo a estimativa quando houver fusões | As duas acima |
-| Sentido inverso: da porta PON, listar todos os assinantes | Motor + tela |
-| Ocupação de fibras por cabo (livres, em uso, reservadas) | Fusões cadastradas |
-| Splitter desbalanceado | Motor (o tipo já prevê `unbalancedTapPercent`) |
-| Fibra apagada cedida a provedor | Fusões + cessões |
+| Ligar várias fibras de uma vez (cabo a cabo, em sequência) | Hoje é uma a uma |
+| Destacar no mapa o caminho rastreado | O caminho hoje aparece só em texto |
+| Sentido inverso: da porta PON, listar as CTOs e os assinantes | Motor + tela |
+| Ocupação de fibras por cabo no painel do mapa | Os dados já existem |
+| Usar o valor exato no lugar da estimativa nas pendências | Quando houver fusões |
+| ONU no cliente e ligação do drop até ela | Hoje o caminho termina na porta da CTO |
+| Sangria: abrir um cabo no meio do lance | O modelo só liga fibra nas pontas do cabo |
+| Splitter desbalanceado | O tipo já prevê `unbalancedTapPercent` |
+| Perda medida por ligação | O motor aceita; falta campo na tela |
+| Fibra apagada cedida a provedor | Depende de cessões |
 
 ## Rede neutra na topologia
 

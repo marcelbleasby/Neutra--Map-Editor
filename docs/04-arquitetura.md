@@ -36,6 +36,7 @@ src/
       model.ts             formato das features, nomes, resumo (puro)
       drawStyles.ts        estilos do Draw derivados do catálogo
       Editor.tsx, Palette.tsx, Inspector.tsx
+    diagram/             ligações por nó: model.ts, layout.ts (puros), NodeDiagram.tsx
     import/              KML/KMZ: kml.ts (leitura), classify.ts, build.ts, ImportDialog.tsx
     projects/
   lib/storage.ts       persistência

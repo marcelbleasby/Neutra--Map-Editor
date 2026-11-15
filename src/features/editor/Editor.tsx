@@ -10,7 +10,10 @@ import type { Project } from "@/domain/types";
 import type { BuildResult } from "@/features/import/build";
 import { clearPendingImport, peekPendingImport, prepareImport, type ImportDraft } from "@/features/import/draft";
 import { ImportDialog } from "@/features/import/ImportDialog";
-import { DEMO_PROVIDERS, getProject } from "@/lib/storage";
+import { buildOpticalModel, type OpticalData } from "@/features/diagram/model";
+import { NodeDiagram } from "@/features/diagram/NodeDiagram";
+import { DEMO_PROVIDERS, getProject, loadOptical, saveOptical } from "@/lib/storage";
+import { computeRoutes } from "./network";
 import { Inspector } from "./Inspector";
 import type { ElementFeature } from "./model";
 import { Palette } from "./Palette";
@@ -59,6 +62,18 @@ function Workspace({ project }: { project: Project }) {
     updateProperties,
     deleteSelected,
   } = useNetworkEditor(project, MAPBOX_TOKEN);
+
+  // Nível óptico: equipamentos e ligações dentro dos nós.
+  const [optical, setOptical] = useState<OpticalData>(() => loadOptical(project.id));
+  const [diagramNodeId, setDiagramNodeId] = useState<string | null>(null);
+  const [opticalSaveFailed, setOpticalSaveFailed] = useState(false);
+  const opticalModel = buildOpticalModel(features, optical, project.id);
+  const diagramNode = features.find((feature) => feature.id === diagramNodeId);
+
+  function changeOptical(next: OpticalData) {
+    setOptical(next);
+    setOpticalSaveFailed(!saveOptical(project.id, next));
+  }
 
   const fileInput = useRef<HTMLInputElement>(null);
   // Um projeto criado a partir de um arquivo já chega com a importação pendente.
@@ -135,7 +150,7 @@ function Workspace({ project }: { project: Project }) {
             <div ref={containerRef} className="size-full" />
           </div>
           <div className="pointer-events-none absolute inset-x-3 top-3 flex flex-col gap-2">
-            {[mapError, importError, saveFailed ? "A rede não coube no armazenamento do navegador: as alterações desta sessão não estão sendo salvas. Exporte o GeoJSON para não perder o trabalho." : null]
+            {[mapError, importError, saveFailed || opticalSaveFailed ? "A rede não coube no armazenamento do navegador: as alterações desta sessão não estão sendo salvas. Exporte o GeoJSON para não perder o trabalho." : null]
               .filter(Boolean)
               .map((message) => (
                 <p key={message} role="alert" className="rounded-md bg-red-600 px-3 py-2 text-sm text-white shadow">
@@ -160,9 +175,24 @@ function Workspace({ project }: { project: Project }) {
             onChange={updateProperties}
             onSelect={selectElement}
             onDelete={deleteSelected}
+            optical={opticalModel}
+            onOpenDiagram={setDiagramNodeId}
           />
         </aside>
       </div>
+      {diagramNode && (
+        <NodeDiagram
+          key={diagramNode.id}
+          node={diagramNode}
+          projectId={project.id}
+          model={opticalModel}
+          data={optical}
+          upstreamCableId={computeRoutes(features).get(diagramNode.id)?.cableIds.at(-1)}
+          nameOf={(id) => features.find((feature) => feature.id === id)?.properties.name ?? "?"}
+          onChange={changeOptical}
+          onClose={() => setDiagramNodeId(null)}
+        />
+      )}
       {draft && (
         <ImportDialog draft={draft} existing={features} ready={ready} onImport={handleImport} onClose={closeImport} />
       )}

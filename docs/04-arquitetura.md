@@ -10,10 +10,10 @@
 | Geometria | Turf (`@turf/length`) | em uso |
 | Testes | Vitest (regras puras) | em uso |
 | Persistência | `localStorage` atrás de `src/lib/storage.ts` | provisório |
-| Dados | `geo-api-neutra` (áreas e pontos); topologia ainda sem serviço dono | a integrar |
-| Autenticação | `identity-api-neutra`: login por e-mail e senha, JWT RS256 | a integrar |
-| Coletor SNMP | `snmp-api-neutra` | a integrar |
-| Notificações | `notification-api-neutra` (só e-mail) | a integrar |
+| Dados | `geo-api-neutra`: cada Projeto é um rascunho de cobertura | a integrar |
+| Autenticação | `identity-api-neutra`, com sessão no servidor do editor | a integrar |
+| Coletor SNMP | `snmp-api-neutra` | outra fase |
+| Notificações | `notification-api-neutra` (tem caixa de avisos) | outra fase |
 | Hospedagem | VPS própria, com ambientes separados | definido |
 
 Este repositório é o **front-end**. Banco de dados, regras de acesso e ingestão de
@@ -84,33 +84,32 @@ Não é uma tela de mapa: é um editor esquemático aberto a partir de uma CEO, 
 POP, mostrando os cabos que entram, suas fibras por tubo/cor, os splitters e as
 conexões entre eles. Opera sobre `Fiber`, `Port` e `Connection`.
 
-## Persistência e API
+## Persistência e integração
 
-Este projeto não terá banco nem ORM próprios: `src/lib/storage.ts` passa a chamar
-os serviços da plataforma Neutra+, e suas assinaturas viram assíncronas.
+Hoje tudo fica no `localStorage`, atrás de `src/lib/storage.ts`. O destino está
+decidido (ver `docs/adr/`):
 
-O serviço analisado até aqui é a `geo-api-neutra` (ver `docs/07-integracao-geo.md`):
-
-- Guarda **áreas de cobertura** (polígonos) e **pontos de rede**, por organização.
-  Áreas e nós do editor encaixam nela.
-- **Não guarda linhas nem topologia.** Cabos, fibras, portas, fusões e cessões não têm
-  serviço dono hoje — é a principal pendência da integração.
-- Não tem conceito de projeto, nem leitura por área visível, nem controle de versão.
-- A organização é informada por quem chama, e não há CORS: o navegador fala com um
-  intermediário (Route Handler do Next ou *gateway* da plataforma) que injeta a
-  organização a partir da sessão.
+- O editor não tem banco próprio (ADR 0001).
+- Cada Projeto é um rascunho de cobertura da geo (ADR 0003); a correspondência campo a
+  campo está em `docs/03-modelo-de-dados.md`.
+- A topologia vai morar na geo (ADR 0002); até lá, portas e ligações vão em atributos
+  (ADR 0007).
 
 ### Sessão
 
-O login é do `identity-api-neutra` (`docs/09-integracao-identidade.md`). Os tokens
-ficam em *cookie* `httpOnly` gravado por um Route Handler; o navegador nunca os vê.
-As chamadas aos serviços passam por outro Route Handler, que acrescenta o
-`Authorization` e preenche `organization_id` com o `org` do token. O token de acesso
-dura 15 minutos e o serviço ainda não tem rota de renovação.
+O navegador fala só com o servidor do editor (ADR 0004):
 
-O que o editor precisa e a API talvez ainda não tenha vira pedido para o time da API,
-não regra de negócio aqui. Route Handlers do Next ficam reservados a intermediar as
-chamadas (sessão, organização, segredos), sem guardar dados.
+```
+Navegador ──cookie httpOnly──▶ Next (Route Handlers) ──Bearer──▶ nginx da plataforma ──▶ identity / geo
+```
+
+- Login em `POST /identity/api/v1/auth/login`, seguido da escolha do perfil Seller
+  (`/auth/context`) e de MFA quando exigido.
+- O servidor guarda os tokens, renova a sessão em um único lugar — o token de
+  renovação é de uso único — e preenche a organização a partir do token.
+- Route Handlers só intermedeiam; não guardam dados.
+
+O estado atual de cada serviço está em `docs/12-portal-da-plataforma.md`.
 
 ## Integração SNMP (futura)
 
@@ -142,33 +141,20 @@ OLTs ──SNMP──▶ Coletor ──alarmes──▶ API principal ──▶ 
 - **Tipos de alarme previstos:** OLT inacessível, PON fora, ONU offline, dying gasp
   (queda de energia no assinante), potência baixa, temperatura alta.
 
-## Avisos e notificações (futuro)
+## Avisos de rede (outra fase)
 
-O serviço da plataforma é o `notification-api-neutra`, analisado em
-`docs/08-integracao-notificacoes.md`. Ele **só envia e-mail**, a partir de um evento
-no RabbitMQ. Não guarda avisos por usuário, não tem leitura, preferências nem tempo
-real — a central de avisos dentro do aplicativo ainda não tem serviço dono.
+A plataforma já tem caixa de avisos no aplicativo (`docs/12-portal-da-plataforma.md`),
+hoje só com eventos de pedido e pagamento. Avisos de rede dependem de alarmes, que
+dependem do SNMP; os dois ficam para outra fase. Quando vierem:
 
-O desenho-alvo, com duas origens e um só modelo (`Notification`):
-
-- **Alarmes de rede** — vindos do SNMP, com severidade.
-- **Avisos do sistema** — convite para projeto, exportação concluída, conflito de
-  edição, cessão perto do vencimento.
-
-Decisões de desenho:
-
-- Destinatários resolvidos pelos membros do projeto e suas preferências (severidade
-  mínima, canal).
-- Canais: e-mail já existe na plataforma; no aplicativo depende de serviço dono;
-  webhook depois.
-- Agrupamento: um corte de cabo gera uma notificação com a causa raiz, não uma por ONU.
-- Entrega em tempo real por Server-Sent Events; polling é aceitável na primeira versão.
-- Toda notificação de alarme leva ao elemento no mapa.
+- um corte de cabo gera um aviso com a causa provável, não um por ONU;
+- todo aviso de rede leva ao elemento no mapa;
+- o impacto de falha (`impactOf`) diz quais portas compartilhadas foram atingidas.
 
 ## Segurança e isolamento
 
-- Toda consulta filtra por `projectId`, e o acesso ao projeto é verificado na API.
-- Acesso de provedor (fase futura) enxerga só as próprias cessões e assinantes, e a
-  viabilidade sem dados de concorrentes.
+- O editor é só do perfil Seller; quem compra não vê a rede (ADR 0005).
+- A organização de cada chamada vem do token, no servidor do editor, nunca do
+  navegador (ADR 0004).
 - O token `NEXT_PUBLIC_MAPBOX_TOKEN` é público por natureza: restringi-lo por URL no
   painel do Mapbox.

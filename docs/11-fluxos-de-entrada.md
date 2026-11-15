@@ -43,7 +43,7 @@ Um projeto pode começar de três formas:
 | Ponto | `POP`, `OLT`, `CENTRAL`, `DATACENTER` | POP |
 | Ponto | `POSTE`, `PST`, `P_12` | Poste |
 | Ponto | `CS`, `SUBTERRANEA`, `CAIXA DE PASSAGEM` | Caixa subterrânea |
-| Ponto | `CLIENTE`, `ASSINANTE`, `ONU` | Cliente |
+| Ponto | `CLIENTE`, `ASSINANTE`, `ONU` | Assinante |
 | Ponto | nada disso | Sugestão: ignorar |
 | Linha | `DROP` | Drop |
 | Linha | `BACKBONE`, `TRONCO`, `ANEL`, `INTERLIGACAO`, ou só `CEO`/`POP` nas duas pontas | Cabo backbone |

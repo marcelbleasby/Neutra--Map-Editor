@@ -22,18 +22,19 @@ Abra http://localhost:3000, crie um projeto e desenhe a rede.
   comprimento calculado automaticamente.
 - Importação de KML/KMZ, na criação do projeto ou dentro do editor: os elementos são
   reconhecidos pelo nome, revisados em grupos e a topologia é montada automaticamente.
-- Portas da CTO com situação, provedor e cliente.
+- Portas da CTO com situação, marcação de porta compartilhada e assinante.
 - Diagrama de ligações de cada POP, CEO e CTO: fibras em cor, OLT, DIO e splitters,
   ligação por clique e caminho do sinal até a porta PON.
-- Topologia: caminho de cada ponto até o POP, o que cai se um elemento falhar (com os
-  provedores afetados), orçamento óptico estimado e lista de pendências do desenho.
+- Topologia: caminho de cada ponto até o POP, o que cai se um elemento falhar (com as
+  portas compartilhadas atingidas), orçamento óptico estimado e lista de pendências do desenho.
 - Resumo do projeto (contagem, metragem de cabo, ocupação de portas) e exportação GeoJSON.
 
-Os dados ficam no `localStorage` do navegador. Integração com a API, autenticação,
-diagrama de fusões, SNMP e notificações estão planejados em [`docs/05-roadmap.md`](docs/05-roadmap.md).
+Os dados ficam no `localStorage` do navegador. A integração com a plataforma Neutra+
+(login e projetos na geo) é a próxima fase, descrita em [`docs/05-roadmap.md`](docs/05-roadmap.md).
 
 ## Documentação
 
+- [Glossário](GLOSSARY.md) e [decisões](docs/adr/)
 - [Produto](docs/01-produto.md)
 - [Domínio FTTH](docs/02-dominio-ftth.md)
 - [Modelo de dados](docs/03-modelo-de-dados.md)
@@ -45,3 +46,5 @@ diagrama de fusões, SNMP e notificações estão planejados em [`docs/05-roadma
 - [Integração com o serviço de identidade](docs/09-integracao-identidade.md)
 - [Topologia](docs/10-topologia.md)
 - [Fluxos de entrada: KML/KMZ e SNMP](docs/11-fluxos-de-entrada.md)
+- [Estado atual dos serviços da plataforma](docs/12-portal-da-plataforma.md)
+- [Pedidos a outros times](docs/13-pedidos-a-outros-times.md)

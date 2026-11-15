@@ -1,103 +1,71 @@
 # Roadmap
 
-## Fase 0 — Fundação (feita)
+As decisões que orientam esta ordem estão em [`docs/adr/`](adr/); o que depende de
+outros times, em [`docs/13-pedidos-a-outros-times.md`](13-pedidos-a-outros-times.md).
+
+## Feito
 
 - Next.js + Mapbox GL Draw; projetos; desenho de nós, cabos e áreas.
-- Encaixe de cabos nos nós, comprimento automático, portas de CTO por provedor.
-- Topologia física: regras de ligação, pontos de passagem, rota até o POP, impacto de
-  falha por provedor, orçamento óptico estimado e lista de pendências.
-- Grafo óptico: fibras, portas, conexões e rastreamento até a PON.
-- Diagrama de ligações por POP, CEO e CTO, com fibras em cor, equipamentos e caminho
-  do sinal.
-- Importação de KML/KMZ com classificação pelo nome e montagem da topologia
-  (`docs/11-fluxos-de-entrada.md`).
-- Persistência local, exportação GeoJSON.
-- Modelo de domínio completo em `src/domain/types.ts`.
+- Topologia física: encaixe de cabos, pontos de passagem, regras de ligação, rota até
+  o POP, impacto de falha, orçamento óptico estimado e pendências.
+- Diagrama de ligações de POP, CEO e CTO, com rastreamento do sinal até a porta PON.
+- Importação de KML/KMZ com classificação pelo nome.
+- Portas de CTO com situação, compartilhamento e assinante.
+- Glossário e decisões registradas.
 
-## Fase 1 — Integração com a plataforma Neutra+
+Tudo isso roda no navegador, com os dados no `localStorage`.
 
-Ver `docs/07-integracao-geo.md`.
+## Fase 1 — Entrar na plataforma
 
-- Login pelo `identity-api-neutra`, sessão em *cookie* `httpOnly` e intermediário que
-  injeta a organização (`docs/09-integracao-identidade.md`). **Uso no dia a dia
-  depende de a identidade ganhar renovação de sessão**: hoje o token vale 15 minutos.
-- Áreas de cobertura e nós gravados na `geo-api-neutra`; busca por endereço via
-  `/geocode`.
-- **Definir onde moram cabos e topologia** — hoje nenhum serviço os guarda. Até lá,
-  cabos continuam no `localStorage`.
-- Empresas, membros e papéis por projeto (a plataforma não tem projeto hoje).
-- Cadastro de provedores.
-- Portas de CTO deixam de ser `CtoPort` e passam a `Port` + `Lease` + `Service`.
-- Configuração por ambiente e publicação na VPS.
+Não depende de nenhum pedido a outro time.
 
-## Fase 2 — Topologia óptica
+- Login pela identidade, com MFA e escolha do perfil Seller; sessão no servidor do
+  editor (ADR 0004).
+- Permissões da interface pelo papel (`ROLE_ACCESS`).
+- Projetos como rascunhos de cobertura da geo (ADR 0003): criar, listar, abrir.
+- Nós, cabos e áreas como feições do rascunho, com controle de versão por feição.
+- Carregamento por área visível do mapa. Resolve o limite atual de elementos no Draw:
+  a rede passa a ser desenhada em camadas comuns e o Draw recebe só o que se edita.
+- Portas, equipamentos e ligações em atributos da feição do nó (ADR 0007).
+- Busca por endereço pela geocodificação da geo.
 
-Ver `docs/10-topologia.md`. O diagrama de ligações já existe; falta:
+## Fase 2 — Importar pela plataforma
+
+- Envio do KMZ para a geo, com prévia; o Projeto nasce como rascunho copiado da versão.
+- Revisão da classificação usando a da geo; o classificador do editor é aposentado.
+- Sugestões de ligação a partir da topologia inferida pela geo, quando ela for
+  publicada; o usuário aceita ou corrige (ADR 0006).
+
+## Fase 3 — Completar a topologia
+
+Dentro do editor, sem depender de outros times.
 
 - Ligar várias fibras de uma vez e destacar no mapa o caminho rastreado.
-- Sentido inverso (da PON às CTOs e assinantes) e ocupação de fibras por cabo.
-- Valor exato no lugar da estimativa nas pendências, onde houver fusões.
-- ONU no cliente; sangria; reserva técnica no comprimento; dividir e unir cabos.
+- Sentido inverso: da porta PON, listar CTOs e assinantes.
+- Ocupação de fibras por cabo; valor exato no lugar da estimativa nas pendências.
+- Consulta de viabilidade por endereço, calculada sobre o projeto carregado.
+- ONU no assinante, sangria, reserva técnica no comprimento, dividir e unir cabos.
 
-## Fase 3 — Rede neutra e assinantes
+## Fase 4 — Rede neutra de ponta a ponta
 
-- Cessões com vigência; ocupação por provedor.
-- Assinantes e serviços ligados à porta da CTO.
-- Consulta de viabilidade por endereço (CTOs próximas com porta livre).
-- Relatórios de ocupação por provedor, CTO e área.
-- Integração com ERP/CRM dos provedores.
+Depende dos pedidos G2, G3, G4 e M1.
 
-## Fase 4 — Monitoramento e notificações
+- Portas, fibras e ligações como entidades da geo, com migração dos atributos.
+- Viabilidade respondida pela geo.
+- Compartilhamento ligado ao pedido do marketplace: a porta mostra qual Empresa a usa.
+- Publicar a área de cobertura do Projeto como cobertura de uma oferta.
 
-Ver `docs/06-integracao-snmp.md`.
+## Outra fase
 
-- Projeto a partir do SNMP: listar os dispositivos do coletor, posicionar os POPs e
-  vincular cada OLT (`docs/11-fluxos-de-entrada.md`); mostrar no mapa se está
-  alcançável (o coletor já sustenta isso).
-- Alarmes no mapa com correlação pela topologia — **depende de o coletor passar a
-  gerar alarmes e a ler dados de PON**, o que hoje ele não faz.
-- E-mail de alarme pelo `notification-api-neutra` (precisa de modelos novos na
-  `neutramais-templates-lib`).
-- Central de avisos dentro do aplicativo, preferências e agrupamento — **sem serviço
-  dono hoje** (`docs/08-integracao-notificacoes.md`).
+- SNMP: vincular POP a dispositivo, alarmes no mapa, correlação pela topologia.
+- Avisos de rede na caixa de avisos da plataforma.
+- Integração com o sistema de gestão da Empresa para os assinantes.
+- Uso em campo (PWA) e importação de outros formatos.
 
-## Fase 5 — Escala e campo
+## Em aberto
 
-- Vector tiles e carregamento por área visível.
-- Importação de GeoJSON e Shapefile; KML acima de 5.000 elementos.
-- Uso em campo (PWA): localizar caixa, conferir, registrar foto.
-- Portal do provedor com acesso restrito.
-- Histórico e auditoria por elemento.
-
-## Decisões tomadas
-
-| Decisão | Definição |
+| Assunto | Situação |
 | --- | --- |
-| Dados | Serviços da plataforma Neutra+. Sem banco nem ORM neste projeto. Áreas e pontos na `geo-api-neutra` (`docs/07-integracao-geo.md`). |
-| Hospedagem | VPS própria, com ambientes separados. |
-| Modelo de cessão | Começa por porta de CTO; o tipo já admite saída de splitter, porta PON e fibra apagada. |
-| Identidade | `identity-api-neutra`; `organization_id` é o identificador da empresa. |
-| SNMP | Coletor `snmp-api-neutra`, em repositório próprio; analisado em `docs/06-integracao-snmp.md`. |
-
-## Decisões em aberto
-
-| Decisão | Opções | Recomendação |
-| --- | --- | --- |
-| Dono da topologia | Ampliar a `geo-api-neutra` ou criar serviço de inventário | Ampliar a geo: já tem PostGIS e os pontos de rede |
-| Projeto | Existe na plataforma ou o editor introduz | Confirmar com o time |
-| Dono dos avisos no aplicativo | Ampliar o `notification-api-neutra` ou outro serviço | Ampliar: um ponto único para avisar, com canal `in_app` |
-| Visão do provedor | Mesmo app com papel restrito, ou portal separado | Mesmo app, até haver demanda |
-| Onde nascem os alarmes | No coletor ou na API principal | No coletor, publicando na fila RabbitMQ que ele já usa |
-| Provedores | Organizações na identidade ou cadastro próprio do editor | Organizações na identidade |
-| Mapa base | Só Mapbox, ou também satélite/ortofoto própria | Mapbox ruas + satélite |
-| Campo | PWA ou app nativo | PWA primeiro |
-
-## A conferir com o produto de referência
-
-O site do Geosite Telecom não estava acessível na elaboração destes documentos. Itens
-a validar contra o produto real antes de detalhar cada fase:
-
-- Como o diagrama de fusões é apresentado e editado.
-- Fluxo de viabilidade (por endereço, por raio, por CTO).
-- O que o aplicativo de campo permite fazer offline.
-- Quais integrações com ERP/CRM são oferecidas.
+| Ambientes | Só a homologação está documentada no portal; faltam as URLs de desenvolvimento e produção |
+| Mapa base | Hoje só ruas do Mapbox; avaliar satélite |
+| Produto de referência | O site do Geosite não estava acessível; comparar diagrama de ligações, viabilidade e uso em campo com o produto real |

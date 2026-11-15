@@ -23,7 +23,7 @@ tiver fusões cadastradas, vale a estimativa.
 
 | Característica | Comportamento | Situação |
 | --- | --- | --- |
-| Encaixe das pontas | A ponta do cabo gruda em POP, CEO, CTO ou cliente a até 14 px e registra `fromNodeId` / `toNodeId` | Feito |
+| Encaixe das pontas | A ponta do cabo gruda em POP, CEO, CTO ou assinante a até 14 px e registra `fromNodeId` / `toNodeId` | Feito |
 | Pontos de passagem | Vértice intermediário gruda em poste, caixa subterrânea ou reserva e registra `viaNodeIds` | Feito |
 | Nó movido | Pontas e vértices de passagem dos cabos acompanham | Feito |
 | Nó excluído | Os cabos perdem a referência e viram pendência | Feito |
@@ -38,7 +38,7 @@ tiver fusões cadastradas, vale a estimativa.
 | --- | --- |
 | Backbone | POP, CEO |
 | Distribuição | POP, CEO, CTO |
-| Drop | Uma CTO e um cliente |
+| Drop | Uma CTO e um assinante |
 
 As regras estão em `CABLE_ENDPOINTS` (`src/domain/catalog.ts`). Violação **não
 bloqueia** o desenho: vira pendência. Rede em campo nem sempre segue o manual, e um
@@ -50,7 +50,7 @@ Para cada nó, o caminho de cabos até o POP mais próximo (`computeRoutes`). É
 de tudo que vem abaixo. Em rede em árvore há um só caminho; se o desenho tiver anel,
 vale o mais curto.
 
-Na interface: ao selecionar CEO, CTO ou cliente, o painel mostra o caminho com cada
+Na interface: ao selecionar CEO, CTO ou assinante, o painel mostra o caminho com cada
 nó clicável e a metragem total.
 
 ### Impacto de falha
@@ -58,19 +58,19 @@ nó clicável e a metragem total.
 "Se este elemento falhar, o que cai?" (`impactOf`) — para qualquer nó, cabo ou ponto
 de passagem:
 
-- CTOs e clientes que perdem o caminho até o POP;
+- CTOs e assinantes que perdem o caminho até o POP;
 - portas em uso nessas CTOs;
-- **provedores afetados**, pelas portas reservadas ou em uso.
+- **portas compartilhadas** reservadas ou em uso nessas CTOs.
 
 Um poste conta: derrubá-lo leva junto todos os cabos que passam por ele.
 
 É a mesma conta que a correlação de alarmes vai usar ao contrário: dado um conjunto
 de ONUs fora do ar, qual é o elemento comum rio acima (`docs/06-integracao-snmp.md`).
-A lista de provedores é o que permite avisar só quem foi atingido.
+A contagem de portas compartilhadas diz quando a falha atinge outra Empresa.
 
 ### Orçamento óptico estimado
 
-Para CTO e cliente (`estimateLoss`), a atenuação do POP até o ponto:
+Para CTO e assinante (`estimateLoss`), a atenuação do POP até o ponto:
 
 - comprimento dos cabos × 0,35 dB/km;
 - splitter de cada CEO no caminho (campo "Splitter de 1º nível") e o da CTO (o número
@@ -88,10 +88,10 @@ Lista sempre visível no resumo do projeto (`findIssues`); clicar leva ao elemen
 | Pendência | Gravidade |
 | --- | --- |
 | Cabo com uma ou duas pontas soltas | Aviso |
-| CEO, CTO ou cliente sem caminho até um POP | Aviso |
+| CEO, CTO ou assinante sem caminho até um POP | Aviso |
 | Nome repetido no mesmo tipo | Aviso |
 | Cabo terminando em tipo de nó não permitido | Erro |
-| Drop que não liga uma CTO a um cliente | Erro |
+| Drop que não liga uma CTO a um assinante | Erro |
 | Mais drops do que portas na CTO | Erro |
 | Atenuação estimada acima do orçamento | Erro |
 
@@ -105,7 +105,7 @@ fibras em uso do que tem, elemento ativo dependendo de elemento planejado.
 - **Fibras** não são desenhadas: nascem de `fiberCount` e `fibersPerTube` do cabo
   (`generateFibers`), com tubo e posição para a cor ABNT.
 - **Equipamentos** ficam dentro de um nó: OLT e DIO no POP, splitter em CEO e CTO,
-  ONU no cliente. Cada um tem **portas** com um papel (`pon`, `splitter_in`,
+  ONU no assinante. Cada um tem **portas** com um papel (`pon`, `splitter_in`,
   `splitter_out`, `drop`, `dio`…).
 - **Conexões** unem duas pontas dentro de um nó: fusão, conector ou cordão.
 
@@ -175,24 +175,28 @@ fibras, nó removido — são descartadas ao montar o modelo (`buildOpticalModel
 | Sentido inverso: da porta PON, listar as CTOs e os assinantes | Motor + tela |
 | Ocupação de fibras por cabo no painel do mapa | Os dados já existem |
 | Usar o valor exato no lugar da estimativa nas pendências | Quando houver fusões |
-| ONU no cliente e ligação do drop até ela | Hoje o caminho termina na porta da CTO |
+| ONU no assinante e ligação do drop até ela | Hoje o caminho termina na porta da CTO |
 | Sangria: abrir um cabo no meio do lance | O modelo só liga fibra nas pontas do cabo |
 | Splitter desbalanceado | O tipo já prevê `unbalancedTapPercent` |
 | Perda medida por ligação | O motor aceita; falta campo na tela |
-| Fibra apagada cedida a provedor | Depende de cessões |
+| Fibra apagada compartilhada com outra Empresa | Hoje só porta de CTO é compartilhada |
 
 ## Rede neutra na topologia
 
-- A porta da CTO carrega situação e provedor; é a unidade de cessão.
-- Ocupação por provedor aparece no resumo e no impacto de falha.
-- A fazer: reserva de porta com prazo, viabilidade ("CTOs com porta livre a até N
-  metros de um endereço") e o desdobramento de `CtoPort` em `Port` + `Lease` +
-  `Service` (`docs/03-modelo-de-dados.md`).
+- Cada porta da CTO tem uma situação e pode ser marcada como **compartilhada**.
+- O resumo do projeto e o impacto de falha contam as portas compartilhadas, para a
+  Empresa saber quando uma falha atinge quem usa a rede dela.
+- A fazer: consulta de viabilidade por endereço (CTOs com porta livre a até 250 m) e
+  dizer com qual Empresa a porta está compartilhada, o que depende dos pedidos do
+  marketplace (`docs/13-pedidos-a-outros-times.md`).
 
 ## Onde isso vai morar
 
-Tudo acima roda no navegador sobre os dados do projeto. Na plataforma, cabos e
-topologia ainda não têm serviço dono (`docs/07-integracao-geo.md`). Os módulos são
-puros — sem React, Mapbox nem rede — para que as mesmas regras possam rodar num
-serviço quando ele existir, e para que as respostas (rota, impacto, pendências) não
-mudem de significado na migração.
+Tudo acima roda no navegador sobre os dados do projeto. Na plataforma, a topologia
+vai morar na geo (ADR 0002), com cada Projeto guardado como rascunho de cobertura
+(ADR 0003) e, por enquanto, portas e ligações em atributos (ADR 0007).
+
+A geo terá um motor próprio que **infere** ligações de um KMZ. Num Projeto vale a
+ligação declarada; a inferida entra como sugestão na importação (ADR 0006). Os
+módulos daqui são puros — sem React, Mapbox nem rede — para que as mesmas regras
+possam ser comparadas com as da geo.

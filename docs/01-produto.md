@@ -1,73 +1,84 @@
 # Produto
 
+O vocabulário está em [`GLOSSARY.md`](../GLOSSARY.md); as decisões difíceis de
+reverter, em [`docs/adr/`](adr/).
+
 ## Em uma frase
 
-Um editor de mapas onde a operadora de uma rede FTTH neutra documenta toda a sua
-infraestrutura — do POP à porta da CTO — e enxerga, para cada porta, qual provedor a
-ocupa e qual assinante está ligado nela.
+Um editor de mapas onde um provedor documenta toda a sua rede FTTH — do POP à porta
+da CTO — e marca quais portas compartilha com outras empresas pela plataforma Neutra+.
 
-## Rede neutra: o que muda
+## Onde ele se encaixa
 
-Numa rede FTTH comum, a mesma empresa é dona da fibra e do assinante. Numa **rede
-neutra**, a dona da infraestrutura (a *operadora neutra*) não vende internet ao
-consumidor: ela cede capacidade a vários **provedores**, que vendem o serviço.
+A Neutra+ é um marketplace: empresas com perfil **Seller** publicam ofertas e empresas
+com perfil **Buyer** compram. Uma das coisas que se vende é CTO, com quantidade de
+portas.
 
-Isso cria três perguntas que um software de documentação comum não responde bem:
+O editor é a ferramenta do Seller para **manter a rede por trás dessas ofertas**:
 
-1. **De quem é esta porta?** Cada recurso cedível (porta de CTO, saída de splitter,
-   porta PON, fibra apagada) tem no máximo um provedor por vez.
-2. **O que cada provedor pode ver?** O provedor enxerga a viabilidade e os seus
-   próprios assinantes, não os dos concorrentes.
-3. **Quanto cada provedor ocupa?** Ocupação por provedor é a base do faturamento.
+- desenhar ou importar a rede e manter sua topologia correta;
+- saber, porta a porta, o que está livre, em uso, com defeito ou compartilhado;
+- responder se há viabilidade num endereço;
+- saber o que cai se um elemento falhar.
 
-No modelo de dados isso aparece como a entidade `Lease` (cessão), separada tanto da
-porta física quanto do assinante.
+Quem compra **não entra no editor**. A regra da plataforma é que traçados, POPs e
+CTOs são privados de quem vende; o comprador vê só a área pública e "coberto: sim ou
+não".
 
-## Quem usa
+## Rede neutra aqui
 
-| Persona | O que faz | Papel no projeto |
-| --- | --- | --- |
-| Projetista | Desenha a rede, define splitters e fusões | `designer` |
-| Gestor de rede | Cria projetos, acompanha ocupação e expansão | `manager` |
-| Técnico de campo | Confere e corrige o que está instalado, ativa assinante | `field` |
-| NOC | Recebe alarmes e localiza a falha no mapa | `viewer` + alarmes |
-| Provedor (ISP) | Consulta viabilidade e os próprios assinantes | acesso restrito (fase futura) |
+"Rede neutra" não é uma entidade da plataforma. No editor, ela se resume a isto:
+
+- A Empresa é dona da rede e atende os próprios assinantes.
+- Parte das portas de uma CTO pode ser **porta compartilhada**, marcada uma a uma.
+- O **compartilhamento** — outra Empresa usando aquela porta — nasce de um pedido
+  aceito no marketplace. O editor não cria; só indica qual porta atende o pedido.
+- Da porta compartilhada, a dona da rede sabe a ocupação, não quem é o assinante.
 
 ## Organização
 
-- Uma **empresa** tem vários **projetos** (uma cidade, um bairro, uma expansão).
-- Um **usuário** pode participar de vários projetos da empresa, com um papel em cada.
-- Um **projeto** é a unidade de trabalho do editor: tem seu mapa e seus elementos.
-- **Provedores** são cadastrados na empresa e valem para todos os projetos dela.
+- Uma **Empresa** divide sua rede em **Projetos**: uma cidade, várias, ou parte de uma.
+- Dentro de um projeto, cada **Topologia** é tudo que um POP alimenta. Nenhum cabo
+  cruza projetos.
+- Na plataforma, um usuário pertence a uma única Empresa.
+
+## Quem usa
+
+Os papéis são os de Seller do serviço de identidade.
+
+| Papel | No editor |
+| --- | --- |
+| `seller_owner`, `seller_operations` | Editam a rede |
+| `seller_technical` | Edita ligações e a situação de elementos e portas |
+| `seller_commercial`, `seller_support` | Consultam, inclusive viabilidade |
+| `seller_finance` | Não acessa |
+
+## Cobertura e viabilidade
+
+São duas perguntas diferentes:
+
+- **Cobertura:** o endereço está dentro de uma área de cobertura? É o que a
+  plataforma já responde ao comprador.
+- **Viabilidade:** há CTO com porta livre a até 250 m do endereço, em linha reta? Só
+  a dona da rede consulta. Para ela contam as portas livres não compartilhadas.
+
+Um endereço pode ter cobertura e não ter viabilidade.
 
 ## Referência: Geosite Telecom
 
-O Geosite Telecom é a referência de mercado para este produto. O que é público sobre
-ele: plataforma web e mobile (Android/iOS) para documentar e projetar redes de fibra
-óptica, consulta de disponibilidade de atendimento (viabilidade), planejamento de
-expansão e integração com ERP/CRM.
+O Geosite Telecom é a referência de mercado para a parte de documentação de rede. O
+que é público sobre ele: plataforma web e mobile para documentar e projetar redes de
+fibra óptica, consulta de disponibilidade de atendimento e integração com ERP/CRM.
 
 > **A conferir.** O site `geositetelecom.com.br` não estava acessível quando este
-> documento foi escrito; a lista acima vem de páginas públicas da empresa, não de uso
-> do produto. Antes de fechar o escopo de cada fase, comparar com o produto real —
-> principalmente diagrama de fusões, fluxo de viabilidade e app de campo.
-
-O que adotamos da categoria (Geosite, Geogrid, OZmap):
-
-- Mapa como interface principal; cada elemento abre seu detalhe ao ser clicado.
-- Hierarquia POP → CEO → CTO → assinante, com cabos conectando os nós.
-- Diagrama de fusões dentro das caixas.
-- Cálculo de potência óptica ao longo do caminho.
-- Consulta de viabilidade por endereço.
-
-O que é específico daqui:
-
-- Rede neutra como conceito de primeira classe (provedores, cessões, ocupação).
-- Vários projetos por empresa com papéis por projeto.
-- Alarmes SNMP correlacionados pela topologia e mostrados no mapa.
+> documento foi escrito. Antes de detalhar diagrama de ligações, viabilidade e uso em
+> campo, comparar com o produto real.
 
 ## Fora do escopo
 
-- Faturamento e cobrança (o sistema fornece a ocupação; o ERP cobra).
-- Provisionamento de ONU na OLT (o sistema lê via SNMP; não configura).
-- Redes que não sejam PON (rádio, par metálico, HFC).
+- Visão para quem compra, e cadastro de empresas parceiras.
+- Criar compartilhamentos, preços e pedidos: são do marketplace.
+- Cadastro de assinantes: é do sistema de gestão da Empresa. No editor o assinante é
+  um nome ou código anotado na porta.
+- Provisionamento de ONU na OLT.
+- Monitoramento por SNMP e avisos de rede: ficam para outra fase.

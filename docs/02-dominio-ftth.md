@@ -28,7 +28,7 @@ assinante. Tudo entre a OLT e a ONU é passivo.
 | — | `pole` | Poste. Sustenta o cabo aéreo; o cabo passa sem ser aberto. |
 | — | `chamber` | Caixa subterrânea, equivalente ao poste em rede enterrada. |
 | — | `reserve` | Reserva técnica: sobra de cabo enrolada para manutenção futura. |
-| — | `customer` | Ponto de instalação do assinante. |
+| — | `subscriber` | Ponto de instalação do assinante. |
 
 ### Cabos (`CableKind`)
 
@@ -78,10 +78,10 @@ O detalhe de cada regra, e o que já está implementado, está em `docs/10-topol
 
 **Físicas:**
 
-- A ponta de um cabo só gruda em POP, CEO, CTO ou cliente; um cabo não liga um nó a
+- A ponta de um cabo só gruda em POP, CEO, CTO ou assinante; um cabo não liga um nó a
   ele mesmo.
 - Backbone termina em POP ou CEO; distribuição, em POP, CEO ou CTO; drop liga uma
-  CTO a um cliente.
+  CTO a um assinante.
 - Poste, caixa subterrânea e reserva são pontos de passagem (`viaNodeIds`), não pontas.
 - Mover um nó move os cabos ligados a ele; excluir um nó desliga os cabos.
 - Comprimento do cabo é medido pelo traçado, em metros. O real soma reservas e sobras
@@ -95,15 +95,15 @@ O detalhe de cada regra, e o que já está implementado, está em `docs/10-topol
 - O caminho de uma porta de CTO até a OLT termina em exatamente uma porta PON.
 - Atenuação total do caminho ≤ orçamento da classe do transceptor (GPON B+: 28 dB).
 
-**Comerciais (rede neutra):**
+**Rede neutra:**
 
-- Um recurso cedível tem no máximo uma cessão (`Lease`) ativa ou reservada por vez.
-- Um assinante pertence a exatamente um provedor.
-- Um serviço só ocupa porta cedida ao provedor do assinante.
+- Uma porta compartilhada é usada por no máximo uma Empresa por vez.
+- O compartilhamento nasce de um pedido aceito no marketplace, não do editor.
+- Porta compartilhada não tem assinante anotado: o assinante é da outra Empresa.
 
 ## Situações
 
 - **Elemento** (`LifecycleStatus`): planejado → em construção → ativo → desativado.
-- **Porta** (`PortStatus`): livre, reservada, em uso, defeito.
-- **Cessão** (`LeaseStatus`): reservada, ativa, suspensa, encerrada.
-- **Serviço** (`ServiceStatus`): aguardando instalação, ativo, suspenso, cancelado.
+- **Porta** (`PortStatus`): livre, reservada, em uso, defeito. Independente disso, a
+  porta pode ser compartilhada ou não.
+- **Compartilhamento** (`PortShareStatus`): ativo, suspenso, encerrado.

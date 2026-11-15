@@ -1,17 +1,15 @@
 # Modelo de dados
 
-Espelha `src/domain/types.ts`. Mudou um, mude o outro.
+Espelha `src/domain/types.ts`. Mudou um, mude o outro. Os nomes seguem
+[`GLOSSARY.md`](../GLOSSARY.md).
 
 ## Visão geral
 
 ```mermaid
 erDiagram
     Company ||--o{ CompanyMembership : tem
-    User ||--o{ CompanyMembership : participa
-    Company ||--o{ Project : possui
-    Company ||--o{ Provider : contrata
-    Project ||--o{ ProjectMembership : tem
-    User ||--o{ ProjectMembership : participa
+    User ||--|| CompanyMembership : "vínculo único"
+    Company ||--o{ Project : divide-se
 
     Project ||--o{ NetworkNode : contem
     Project ||--o{ Cable : contem
@@ -26,93 +24,89 @@ erDiagram
     Connection }o--|| OpticalEndpoint : a
     Connection }o--|| OpticalEndpoint : b
 
-    Provider ||--o{ Lease : recebe
-    Lease }o--|| LeasableResource : sobre
-    Provider ||--o{ Customer : atende
-    Customer ||--o{ Service : contrata
-    Service }o--|| Port : "porta da CTO"
-    Service }o--o| Equipment : ONU
-
-    Equipment ||--o{ Alarm : origina
-    Alarm ||--o{ Notification : gera
-    User ||--o{ Notification : recebe
+    Port ||--o| PortShare : "se compartilhada"
+    Company ||--o{ PortShare : "usa a porta"
 ```
 
-`OpticalEndpoint` e `LeasableResource` não são tabelas: são referências polimórficas
-(fibra **ou** porta).
+`OpticalEndpoint` não é tabela: é uma referência a uma fibra **ou** a uma porta.
 
 ## Camadas
 
 ### 1. Organização
 
-`Company`, `User`, `CompanyMembership`, `Project`, `ProjectMembership`, `Provider`.
+`Company`, `User`, `CompanyMembership`, `Project`.
 
-- `Company` é a `Organization` do serviço de identidade, e `companyId` é o
-  `organization_id` usado por todos os serviços (`docs/09-integracao-identidade.md`).
-- O isolamento entre empresas é por `companyId`; entre projetos, por `projectId`.
-- Papéis têm dois níveis: na empresa (`owner`, `admin`, `technician`, `sales`,
-  `lead_technician` — os do serviço de identidade) e no projeto (`manager`,
-  `designer`, `field`, `viewer`). Dono e admin acessam todos os projetos.
-- Projeto e papel por projeto ainda não existem na plataforma.
-- `Provider` pertence à empresa, não ao projeto — o mesmo provedor contrata em várias
-  cidades.
+- `Company` é a organização da plataforma no perfil Seller; `companyId` é o
+  `organization_id` de todos os serviços.
+- Um usuário tem **um único** vínculo ativo, com um papel de Seller. O que cada papel
+  pode fazer no editor está em `ROLE_ACCESS`.
+- `Project` é um recorte livre da rede. Não há papel por projeto.
+- A **Topologia** (tudo que um POP alimenta) não é entidade: é calculada
+  (`computeRoutes`).
 
 ### 2. Rede física
 
-`NetworkNode` (ponto), `Cable` (linha), `CoverageArea` (polígono). É o que o editor
-desenha hoje. Cada um tem `kind`, `name`, `status` e geometria.
+`NetworkNode` (ponto), `Cable` (linha), `CoverageArea` (polígono). É o que se desenha
+no mapa. Cada um tem `kind`, `name`, `status` e geometria.
 
-`Cable.fromNodeId` / `toNodeId` / `viaNodeIds` são o grafo físico.
+`Cable.fromNodeId` / `toNodeId` / `viaNodeIds` formam o grafo físico. As duas pontas
+de um cabo estão sempre no mesmo projeto.
 
 ### 3. Rede óptica
 
-`Fiber`, `Equipment`, `Port`, `Connection`.
+`Fiber`, `Equipment`, `Port`, `Connection` (a **Ligação** do glossário).
 
-- `Fiber` é gerada a partir de `Cable.fiberCount` e `fibersPerTube`; não é desenhada.
-- `Equipment` vive dentro de um `NetworkNode`. Uma CTO é um nó que contém um splitter
-  cujas saídas são as portas de atendimento (`role: "drop"`).
-- `Connection` une dois `OpticalEndpoint` dentro de um nó. É a aresta do grafo óptico.
+- `Fiber` é derivada de `Cable.fiberCount`; não é desenhada.
+- `Equipment` vive dentro de um nó. Uma CTO contém um splitter cujas saídas são as
+  portas de atendimento (`role: "drop"`).
+- `Port` carrega a situação, se é **compartilhada** (`shared`) e, quando é porta
+  própria em uso, o **assinante** como texto livre (`subscriber`).
+- `Connection` une duas pontas dentro de um nó: fusão, conector ou cordão.
 
-### 4. Comercial
+### 4. Rede neutra
 
-`Lease`, `Customer`, `Service`.
+`PortShare` — o **Compartilhamento**: outra Empresa usando uma porta compartilhada.
 
-- `Lease` é a cessão de um recurso a um provedor — o coração da rede neutra.
-- `Service` amarra assinante → ONU → porta da CTO. O caminho até a OLT **não** é
-  guardado: é calculado percorrendo o grafo óptico, para nunca divergir das fusões.
+- Nasce de um pedido aceito no marketplace (`orderId`); o editor não cria (ADR 0005).
+- Uma porta tem no máximo um compartilhamento ativo.
+- Da porta compartilhada, o editor guarda a ocupação, nunca o assinante.
 
 ### 5. Monitoramento
 
-`Alarm`, `Notification`. Ver `docs/04-arquitetura.md`.
+`Alarm`, `Notification`. Ficam para outra fase.
 
 ## O que o editor guarda hoje
 
-Sem backend, o editor persiste uma `FeatureCollection` GeoJSON por projeto
-(`src/features/editor/model.ts`). Cada feature corresponde a um `NetworkNode`, `Cable`
-ou `CoverageArea`, com as propriedades em `ElementProperties`.
+Sem integração, o editor persiste no navegador, por projeto:
 
-Uma simplificação deliberada: as portas da CTO ficam em `properties.ports`
-(`CtoPort`: situação, provedor, nome do cliente). No modelo completo isso se desdobra:
+- uma `FeatureCollection` GeoJSON com nós, cabos e áreas
+  (`src/features/editor/model.ts`);
+- equipamentos cadastrados e ligações do diagrama (`src/features/diagram/model.ts`).
 
-| Hoje (`CtoPort`) | Modelo completo |
+Simplificações deliberadas:
+
+| Hoje | Modelo completo |
 | --- | --- |
-| `index`, `status` | `Port` de um `Equipment` splitter na CTO |
-| `providerId` | `Lease` ativa sobre a porta |
-| `customerName` | `Service` → `Customer` |
+| `CtoPort` nas propriedades da CTO (`status`, `shared`, `subscriber`) | `Port` do splitter da CTO |
+| Splitter da CTO e de 1º nível da CEO derivados das propriedades | `Equipment` + `Port` |
+| Porta marcada como compartilhada, sem dizer com quem | `PortShare`, vindo do marketplace |
 
-A integração com a API deve fazer esse desdobramento.
+Dados gravados com o vocabulário antigo (elemento "cliente", provedor na porta) são
+convertidos ao carregar (`migrateCollection`).
 
-## Requisitos para o banco da API
+## Onde isso vai morar
 
-O banco pertence à API, que tem repositório próprio. O que este modelo espera dele,
-a conferir quando o repositório for analisado:
+Na geo (ADR 0002). Cada Projeto é um **rascunho de cobertura** (ADR 0003):
 
-- Geometrias espaciais indexadas (em PostGIS: `geometry(..., 4326)` com índice GiST).
-- `project_id` em toda tabela de rede.
-- Unicidade parcial para "no máximo uma cessão vigente por recurso":
-  índice único em `(resource_type, resource_id)` onde `status in ('reserved','active')`.
-- Unicidade em `connection` para cada ponta (uma ponta, uma conexão).
-- Caminho óptico por CTE recursiva sobre `connection` + `fiber`; materializar em tabela
-  de cache se a consulta de viabilidade ficar lenta.
-- Histórico: tabela de auditoria com quem alterou o quê — rede documentada sem
-  histórico perde a confiança do campo.
+| Editor | Rascunho de cobertura da geo |
+| --- | --- |
+| Projeto | O rascunho |
+| Nó, cabo, área | Feição (ponto, linha, polígono) |
+| `kind` | `asset_type` — hoje só `cto`, `fiber_cable`, `splice_closure`, `pole`, `coverage_area` |
+| `name`, `notes` | `name`, `description` |
+| Demais propriedades | `attributes` (texto → texto) |
+| Portas, equipamentos, ligações | `attributes` da feição do nó, provisoriamente (ADR 0007) |
+| Controle de versão | `expected_revision` por feição |
+
+Limite: 20.000 feições por rascunho. O que falta na geo está em
+`docs/13-pedidos-a-outros-times.md`.

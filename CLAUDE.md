@@ -1,23 +1,26 @@
 # Neutra Map Editor
 
-Editor de mapas para documentar e operar redes FTTH **neutras**: a empresa dona da
-infraestrutura mapeia toda a topologia (do POP à porta da CTO e ao assinante) e cede
-capacidade a vários provedores. Referência de produto: Geosite Telecom.
+Editor de mapas onde um provedor (perfil Seller da plataforma Neutra+) documenta toda
+a sua rede FTTH, do POP à porta da CTO, e marca quais portas compartilha com outras
+empresas. Referência de produto: Geosite Telecom.
+
+**Use o vocabulário de `GLOSSARY.md`** em código, interface e documentos. Em
+particular: Empresa (não "operadora" nem "provedor locatário"), Compartilhamento (não
+"cessão"), Ligação (não "conexão"), Assinante (não "cliente"), CTO e CEO (não "caixa").
 
 @AGENTS.md
 
-Este repositório é o **front-end** e faz parte da plataforma Neutra+. Os dados virão
-dos serviços dela — `identity-api-neutra` (login, empresas, membros),
-`geo-api-neutra` (áreas e pontos), `snmp-api-neutra` (leituras SNMP) e
-`notification-api-neutra` (e-mail) — ainda não integrados; a hospedagem é em VPS própria. Não crie banco, ORM nem
-coletor aqui. Cabos, topologia e avisos dentro do aplicativo ainda não têm serviço
-dono na plataforma.
+Este repositório é o **front-end**. Os dados virão dos serviços da plataforma —
+identidade (login e papéis) e geo (cada Projeto é um rascunho de cobertura) — ainda
+não integrados; hoje tudo fica no `localStorage`. Não crie banco, ORM nem coletor
+aqui (ADR 0001). O estado atual dos serviços está em `docs/12`; o que falta neles, em
+`docs/13`.
 
 ## Leia antes de mexer
 
 | Assunto | Arquivo |
 | --- | --- |
-| O que é o produto, para quem, o que é rede neutra | `docs/01-produto.md` |
+| O que é o produto, para quem, o que é rede neutra aqui | `docs/01-produto.md` |
 | Glossário FTTH e regras de topologia | `docs/02-dominio-ftth.md` |
 | Entidades e relacionamentos | `docs/03-modelo-de-dados.md` + `src/domain/types.ts` |
 | Stack, estrutura, mapa, SNMP e notificações | `docs/04-arquitetura.md` |
@@ -31,6 +34,7 @@ dono na plataforma.
 | **Estado atual dos serviços** (corrige 06 a 09) | `docs/12-portal-da-plataforma.md` |
 | Vocabulário do produto | `GLOSSARY.md` |
 | Decisões difíceis de reverter | `docs/adr/` |
+| O que o editor precisa dos outros serviços | `docs/13-pedidos-a-outros-times.md` |
 
 `src/domain/types.ts` é a referência canônica das entidades. Se mudar uma entidade,
 atualize `docs/03-modelo-de-dados.md` no mesmo commit.
@@ -71,12 +75,14 @@ src/app/                rotas; páginas só compõem features
   `fromNodeId`/`toNodeId`. Toda regra de conexão fica em função pura
   (`features/editor/topology.ts`, `features/editor/network.ts`,
   `domain/opticalGraph.ts`) com teste.
-- **Regra violada vira pendência, não bloqueio.** O desenho passa por estados
-  incompletos; `findIssues` aponta o que corrigir.
+- **No mapa, regra violada vira pendência, não bloqueio.** O desenho passa por estados
+  incompletos; `findIssues` aponta o que corrigir. No diagrama de ligações é o
+  contrário: ligação impossível é recusada.
 - **Persistência só via `src/lib/storage.ts`.** Componentes não tocam em `localStorage`
   nem fazem `fetch` direto; isso mantém a troca pela API contida em um arquivo.
 - **Escopo por projeto:** todo registro de rede carrega `projectId`; todo projeto,
-  `companyId` (o `organization_id` da plataforma). Nenhuma consulta futura pode omitir esse filtro.
+  `companyId` (o `organization_id` da plataforma). Nenhuma consulta futura pode omitir
+  esse filtro. Nenhum cabo cruza projetos.
 - **Unidades:** metros, dB, dBm. Coordenadas em `[lng, lat]` (ordem do GeoJSON).
 
 ## Armadilhas conhecidas

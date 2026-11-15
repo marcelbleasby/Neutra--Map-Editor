@@ -36,8 +36,12 @@ Depende de receber o repositório da API.
 
 ## Fase 4 — Monitoramento e notificações
 
-- Ligação com o coletor SNMP existente (depende de receber o repositório).
-- Alarmes no mapa com correlação pela topologia.
+Ver `docs/06-integracao-snmp.md`.
+
+- Vincular cada OLT a um dispositivo do coletor e mostrar no mapa se está alcançável
+  (o coletor já sustenta isso).
+- Alarmes no mapa com correlação pela topologia — **depende de o coletor passar a
+  gerar alarmes e a ler dados de PON**, o que hoje ele não faz.
 - Central de notificações, preferências e canais.
 
 ## Fase 5 — Escala e campo
@@ -55,7 +59,7 @@ Depende de receber o repositório da API.
 | Dados | API já existente, em repositório próprio. Sem banco nem ORM neste projeto. |
 | Hospedagem | VPS própria, com ambientes separados. |
 | Modelo de cessão | Começa por porta de CTO; o tipo já admite saída de splitter, porta PON e fibra apagada. |
-| SNMP | Coletor já existente, em repositório próprio. |
+| SNMP | Coletor `snmp-api-neutra`, em repositório próprio; analisado em `docs/06-integracao-snmp.md`. |
 
 ## Decisões em aberto
 
@@ -63,7 +67,8 @@ Depende de receber o repositório da API.
 | --- | --- | --- |
 | Autenticação | A que a API oferece | Confirmar ao analisar o repositório da API |
 | Visão do provedor | Mesmo app com papel restrito, ou portal separado | Mesmo app, até haver demanda |
-| Contrato SNMP | Webhook ou fila; formato do evento | Levantar no repositório do coletor |
+| Onde nascem os alarmes | No coletor ou na API principal | No coletor, publicando na fila RabbitMQ que ele já usa |
+| `organizationId` do coletor | Operadora neutra ou provedor | Confirmar com o time; numa rede neutra a OLT é da operadora |
 | Mapa base | Só Mapbox, ou também satélite/ortofoto própria | Mapbox ruas + satélite |
 | Campo | PWA ou app nativo | PWA primeiro |
 

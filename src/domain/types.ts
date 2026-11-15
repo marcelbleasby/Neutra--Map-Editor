@@ -176,6 +176,8 @@ export interface Equipment {
   unbalancedTapPercent?: number;
   /** OLT/ONU: endereço de gerência usado pela integração SNMP. */
   managementAddress?: string;
+  /** Id do dispositivo no coletor SNMP (ver docs/06-integracao-snmp.md). */
+  monitoringDeviceId?: Id;
 }
 
 export type PortRole =

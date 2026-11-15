@@ -19,6 +19,7 @@ integrados; a hospedagem é em VPS própria. Não crie banco, ORM nem coletor aq
 | Entidades e relacionamentos | `docs/03-modelo-de-dados.md` + `src/domain/types.ts` |
 | Stack, estrutura, mapa, SNMP e notificações | `docs/04-arquitetura.md` |
 | Fases e decisões em aberto | `docs/05-roadmap.md` |
+| O que o coletor SNMP entrega e o que falta | `docs/06-integracao-snmp.md` |
 
 `src/domain/types.ts` é a referência canônica das entidades. Se mudar uma entidade,
 atualize `docs/03-modelo-de-dados.md` no mesmo commit.

@@ -100,21 +100,26 @@ próprio front-end (por exemplo, esconder um segredo do navegador).
 
 ## Integração SNMP (futura)
 
-O coletor SNMP já existe em repositório próprio. A integração proposta, a ajustar
-quando o repositório for analisado:
+O coletor é o `snmp-api-neutra`, serviço em Go com repositório próprio. A análise
+completa está em `docs/06-integracao-snmp.md`. Em resumo:
+
+- Ele faz *polling* periódico e expõe leituras por API REST (TMF628). **Não gera
+  alarmes, não recebe traps, não publica eventos e não lê dados de PON** — só OIDs
+  genéricos de equipamento.
+- Sua API não autentica; o navegador não a chama direto. O acesso passa pela API
+  principal.
+- Com o coletor como está, o editor consegue mostrar se a OLT está alcançável.
+  Alarmes de ONU, de PON e de potência dependem de evolução do coletor.
+
+O desenho-alvo continua sendo:
 
 ```
-OLTs ──SNMP──▶ Coletor ──eventos──▶ API de ingestão ──▶ Alarm ──▶ Notification
-                (existente)          (API existente)      │
-                                                          ▼
-                                                 correlação pela topologia
+OLTs ──SNMP──▶ Coletor ──alarmes──▶ API principal ──▶ Alarm ──▶ Notification
+                                                        │
+                                                        ▼
+                                               correlação pela topologia
 ```
 
-- **O coletor fica fora do Next.js.** Polling e traps são processos de longa duração
-  e precisam de alcance de rede até as OLTs; não cabem em função serverless.
-- **Contrato de entrada:** o coletor envia eventos normalizados (OLT, slot/porta PON,
-  serial da ONU, tipo, valor). O sistema resolve para `Equipment`/`Port`/`Service`
-  usando `managementAddress` e `serialNumber`.
 - **Correlação:** o valor do mapa está aqui. Várias ONUs offline na mesma CTO apontam
   para o cabo de distribuição; todas as CTOs de uma CEO, para o backbone. O alarme
   ganha `rootCauseElementId` e o mapa destaca o elemento suspeito.
@@ -122,10 +127,6 @@ OLTs ──SNMP──▶ Coletor ──eventos──▶ API de ingestão ──�
   diferença indica fusão ruim ou fibra degradada.
 - **Tipos de alarme previstos:** OLT inacessível, PON fora, ONU offline, dying gasp
   (queda de energia no assinante), potência baixa, temperatura alta.
-
-A levantar no repositório do coletor: formato do evento, se a entrega é por webhook
-ou fila, quais fabricantes de OLT estão cobertos e se ele já fala com a API. Ao
-front-end cabe mostrar alarmes no mapa e na central de notificações.
 
 ## Avisos e notificações (futuro)
 

@@ -55,7 +55,7 @@ Leitura: `deviceId`, `measurementDate`, `granularity`, `errorMessage` e
 | Coletor | Editor (`src/domain/types.ts`) |
 | --- | --- |
 | `Device` | `Equipment` com `monitoringDeviceId`; casa também por `ipAddress` = `managementAddress` |
-| `organizationId` | `Company.id` — **a confirmar** (ver perguntas) |
+| `organizationId` | `Company.id` |
 | `deviceType` `olt` / `onu` | `EquipmentKind` `olt` / `onu` |
 | Leitura com `errorMessage` | Base para o alarme `olt_unreachable` |
 | `discover` → `status` | Verificação sob demanda no painel do equipamento |
@@ -127,8 +127,6 @@ Os itens 3 e 4 são trabalho no repositório do coletor, não neste.
 
 ## Perguntas em aberto
 
-- `organizationId` é a operadora neutra ou o provedor? O `SDD.md` diz "cada provedor
-  gerencia seus próprios dispositivos", mas numa rede neutra a OLT é da operadora.
 - O "monolito" que publica os eventos de dispositivo é a API principal que o editor
   vai consumir?
 - Quais fabricantes de OLT estão em campo? Isso define os perfis de OID.

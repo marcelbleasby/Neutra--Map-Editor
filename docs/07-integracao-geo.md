@@ -126,7 +126,6 @@ O que precisa existir na API (ou em outro serviço) para o editor sair do protó
   inventário de rede. Recomendo ampliar a geo: ela já tem PostGIS e já é dona dos
   pontos de rede e da viabilidade.
 - **Existe conceito de projeto na plataforma**, ou o editor é que o introduz?
-- **`organization_id` é a operadora neutra ou o provedor?** A mesma dúvida do coletor
-  SNMP. O texto do repositório fala em "provedores registram cobertura".
-- **Como o front-end obtém o token** (serviço de identidade da plataforma) e por onde
-  as chamadas passam?
+- **Por onde as chamadas passam?** O login e o token estão resolvidos em
+  `docs/09-integracao-identidade.md`; falta saber se há um *gateway* na frente dos
+  serviços.

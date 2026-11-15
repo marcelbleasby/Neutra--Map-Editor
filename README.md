@@ -36,3 +36,4 @@ diagrama de fusões, SNMP e notificações estão planejados em [`docs/05-roadma
 - [Integração com o coletor SNMP](docs/06-integracao-snmp.md)
 - [Integração com a API de viabilidade](docs/07-integracao-geo.md)
 - [Integração com o serviço de notificações](docs/08-integracao-notificacoes.md)
+- [Integração com o serviço de identidade](docs/09-integracao-identidade.md)

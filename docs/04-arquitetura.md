@@ -11,7 +11,7 @@
 | Testes | Vitest (regras puras) | em uso |
 | Persistência | `localStorage` atrás de `src/lib/storage.ts` | provisório |
 | Dados | `geo-api-neutra` (áreas e pontos); topologia ainda sem serviço dono | a integrar |
-| Autenticação | JWT da plataforma Neutra+ (`neutramais-auth-lib`) | a confirmar |
+| Autenticação | `identity-api-neutra`: login por e-mail e senha, JWT RS256 | a integrar |
 | Coletor SNMP | `snmp-api-neutra` | a integrar |
 | Notificações | `notification-api-neutra` (só e-mail) | a integrar |
 | Hospedagem | VPS própria, com ambientes separados | definido |
@@ -95,6 +95,14 @@ O serviço analisado até aqui é a `geo-api-neutra` (ver `docs/07-integracao-ge
 - A organização é informada por quem chama, e não há CORS: o navegador fala com um
   intermediário (Route Handler do Next ou *gateway* da plataforma) que injeta a
   organização a partir da sessão.
+
+### Sessão
+
+O login é do `identity-api-neutra` (`docs/09-integracao-identidade.md`). Os tokens
+ficam em *cookie* `httpOnly` gravado por um Route Handler; o navegador nunca os vê.
+As chamadas aos serviços passam por outro Route Handler, que acrescenta o
+`Authorization` e preenche `organization_id` com o `org` do token. O token de acesso
+dura 15 minutos e o serviço ainda não tem rota de renovação.
 
 O que o editor precisa e a API talvez ainda não tenha vira pedido para o time da API,
 não regra de negócio aqui. Route Handlers do Next ficam reservados a intermediar as

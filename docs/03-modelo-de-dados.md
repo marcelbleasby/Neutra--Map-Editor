@@ -47,9 +47,13 @@ erDiagram
 
 `Company`, `User`, `CompanyMembership`, `Project`, `ProjectMembership`, `Provider`.
 
+- `Company` é a `Organization` do serviço de identidade, e `companyId` é o
+  `organization_id` usado por todos os serviços (`docs/09-integracao-identidade.md`).
 - O isolamento entre empresas é por `companyId`; entre projetos, por `projectId`.
-- Papéis têm dois níveis: na empresa (`owner`, `admin`, `member`) e no projeto
-  (`manager`, `designer`, `field`, `viewer`). Admin da empresa acessa todos os projetos.
+- Papéis têm dois níveis: na empresa (`owner`, `admin`, `technician`, `sales`,
+  `lead_technician` — os do serviço de identidade) e no projeto (`manager`,
+  `designer`, `field`, `viewer`). Dono e admin acessam todos os projetos.
+- Projeto e papel por projeto ainda não existem na plataforma.
 - `Provider` pertence à empresa, não ao projeto — o mesmo provedor contrata em várias
   cidades.
 

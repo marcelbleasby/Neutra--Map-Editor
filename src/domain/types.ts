@@ -20,7 +20,11 @@ export type LngLat = [number, number];
 // Organização: empresa, usuários, projetos e provedores (rede neutra)
 // ---------------------------------------------------------------------------
 
-/** Empresa dona/operadora da infraestrutura (a operadora de rede neutra). */
+/**
+ * Empresa dona/operadora da infraestrutura (a operadora de rede neutra).
+ * É a `Organization` do serviço de identidade: `id` é o `organization_id` usado
+ * por todos os serviços da plataforma (ver docs/09-integracao-identidade.md).
+ */
 export interface Company {
   id: Id;
   name: string;
@@ -33,7 +37,8 @@ export interface User {
   email: string;
 }
 
-export type CompanyRole = "owner" | "admin" | "member";
+/** Papéis do serviço de identidade; vêm no campo `role` do token. */
+export type CompanyRole = "owner" | "admin" | "technician" | "sales" | "lead_technician";
 
 /** Vínculo usuário ↔ empresa. Um usuário pode pertencer a várias empresas. */
 export interface CompanyMembership {

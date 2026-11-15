@@ -11,7 +11,9 @@
 
 Ver `docs/07-integracao-geo.md`.
 
-- Login e sessão com o JWT da plataforma; intermediário que injeta a organização.
+- Login pelo `identity-api-neutra`, sessão em *cookie* `httpOnly` e intermediário que
+  injeta a organização (`docs/09-integracao-identidade.md`). **Uso no dia a dia
+  depende de a identidade ganhar renovação de sessão**: hoje o token vale 15 minutos.
 - Áreas de cobertura e nós gravados na `geo-api-neutra`; busca por endereço via
   `/geocode`.
 - **Definir onde moram cabos e topologia** — hoje nenhum serviço os guarda. Até lá,
@@ -65,6 +67,7 @@ Ver `docs/06-integracao-snmp.md`.
 | Dados | Serviços da plataforma Neutra+. Sem banco nem ORM neste projeto. Áreas e pontos na `geo-api-neutra` (`docs/07-integracao-geo.md`). |
 | Hospedagem | VPS própria, com ambientes separados. |
 | Modelo de cessão | Começa por porta de CTO; o tipo já admite saída de splitter, porta PON e fibra apagada. |
+| Identidade | `identity-api-neutra`; `organization_id` é o identificador da empresa. |
 | SNMP | Coletor `snmp-api-neutra`, em repositório próprio; analisado em `docs/06-integracao-snmp.md`. |
 
 ## Decisões em aberto
@@ -74,10 +77,9 @@ Ver `docs/06-integracao-snmp.md`.
 | Dono da topologia | Ampliar a `geo-api-neutra` ou criar serviço de inventário | Ampliar a geo: já tem PostGIS e os pontos de rede |
 | Projeto | Existe na plataforma ou o editor introduz | Confirmar com o time |
 | Dono dos avisos no aplicativo | Ampliar o `notification-api-neutra` ou outro serviço | Ampliar: um ponto único para avisar, com canal `in_app` |
-| Autenticação | JWT da plataforma | Confirmar como o front-end obtém o token |
 | Visão do provedor | Mesmo app com papel restrito, ou portal separado | Mesmo app, até haver demanda |
 | Onde nascem os alarmes | No coletor ou na API principal | No coletor, publicando na fila RabbitMQ que ele já usa |
-| `organization_id` (geo e SNMP) | Operadora neutra ou provedor | Confirmar com o time; numa rede neutra a OLT é da operadora |
+| Provedores | Organizações na identidade ou cadastro próprio do editor | Organizações na identidade |
 | Mapa base | Só Mapbox, ou também satélite/ortofoto própria | Mapbox ruas + satélite |
 | Campo | PWA ou app nativo | PWA primeiro |
 

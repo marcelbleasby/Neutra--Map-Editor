@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { fiberPosition, pathLossDb, totalSplit } from "@/domain/optics";
 import type { ElementKind } from "@/domain/types";
-import { defaultProperties, nextName, summarize, type ElementFeature } from "./model";
+import { defaultProperties, migrateCollection, nextName, summarize, type ElementFeature } from "./model";
 import { detachNodes, followNode, snapCable, type Projector } from "./topology";
 
 // 1 grau = 1000 px: tolerância de 14 px equivale a 0,014 grau.
@@ -116,8 +116,33 @@ describe("modelo do editor", () => {
     cto.properties.ports![0].status = "in_use";
     const summary = summarize([cto, cable("c", [[0, 0], [1, 1]], { lengthMeters: 120 })]);
     expect(summary.ports).toEqual({ free: 7, reserved: 0, in_use: 1, defective: 0 });
+    expect(summary.sharedPorts).toBe(0);
     expect(summary.cableMeters).toBe(120);
     expect(summary.countByKind).toEqual({ cto: 1, cable_distribution: 1 });
+  });
+});
+
+describe("migração do vocabulário antigo", () => {
+  it("cliente vira assinante; provedor na porta vira porta compartilhada", () => {
+    const legacy = {
+      type: "FeatureCollection" as const,
+      features: [
+        { ...node("c", "cto", 0, 0), properties: { kind: "cto", name: "c", status: "active", ports: [
+          { index: 1, status: "in_use", providerId: "provider-1", customerName: "João" },
+          { index: 2, status: "in_use", customerName: "Maria" },
+          { index: 3, status: "free" },
+        ] } },
+        { ...node("x", "pop", 0, 0), properties: { kind: "customer", name: "x", status: "active" } },
+      ],
+    };
+    const migrated = migrateCollection(legacy as never);
+    expect(migrated.features[0].properties.ports).toEqual([
+      { index: 1, status: "in_use", shared: true }, // o assinante era do outro provedor
+      { index: 2, status: "in_use", subscriber: "Maria" },
+      { index: 3, status: "free" },
+    ]);
+    expect(migrated.features[1].properties.kind).toBe("subscriber");
+    expect(migrateCollection(migrated)).toEqual(migrated);
   });
 });
 

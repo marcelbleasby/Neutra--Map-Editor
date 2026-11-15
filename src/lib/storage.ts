@@ -1,6 +1,6 @@
-import type { Company, Id, Project, Provider } from "@/domain/types";
+import type { Company, Id, Project } from "@/domain/types";
 import { EMPTY_OPTICAL, type OpticalData } from "@/features/diagram/model";
-import { EMPTY_COLLECTION, type ElementCollection } from "@/features/editor/model";
+import { EMPTY_COLLECTION, migrateCollection, type ElementCollection } from "@/features/editor/model";
 
 /**
  * Persistência provisória em localStorage.
@@ -14,14 +14,8 @@ const PROJECTS_KEY = "neutra:projects";
 const featuresKey = (projectId: Id) => `neutra:features:${projectId}`;
 const opticalKey = (projectId: Id) => `neutra:optical:${projectId}`;
 
-/** Empresa e provedores fixos até existir autenticação e cadastro. */
-export const DEMO_COMPANY: Company = { id: "company-demo", name: "Operadora Neutra Demo" };
-
-export const DEMO_PROVIDERS: Provider[] = [
-  { id: "provider-1", companyId: DEMO_COMPANY.id, name: "Provedor Alfa", color: "#2563eb" },
-  { id: "provider-2", companyId: DEMO_COMPANY.id, name: "Provedor Beta", color: "#db2777" },
-  { id: "provider-3", companyId: DEMO_COMPANY.id, name: "Provedor Gama", color: "#0d9488" },
-];
+/** Empresa fixa até existir login pela identidade da plataforma. */
+export const DEMO_COMPANY: Company = { id: "company-demo", name: "Empresa Demo" };
 
 function read<T>(key: string, fallback: T): T {
   try {
@@ -77,7 +71,7 @@ export function deleteProject(projectId: Id) {
 }
 
 export function loadFeatures(projectId: Id): ElementCollection {
-  return read<ElementCollection>(featuresKey(projectId), EMPTY_COLLECTION);
+  return migrateCollection(read<ElementCollection>(featuresKey(projectId), EMPTY_COLLECTION));
 }
 
 /** Devolve falso se não coube: o editor segue em memória e avisa o usuário. */

@@ -6,14 +6,16 @@ import type { ElementKind, Id, LifecycleStatus, PortStatus } from "@/domain/type
  * Porta de atendimento de uma CTO como o editor a enxerga hoje.
  *
  * Simplificação deliberada: no modelo completo (src/domain/types.ts) isto se
- * desdobra em Port + Lease (provedor) + Service (assinante). Enquanto não há
+ * desdobra em Port (com assinante) + PortShare (compartilhamento). Enquanto não há
  * backend, o editor guarda o resumo direto nas propriedades da CTO.
  */
 export interface CtoPort {
   index: number;
   status: PortStatus;
-  providerId?: Id;
-  customerName?: string;
+  /** Porta compartilhada: fica à disposição de outra Empresa. */
+  shared?: boolean;
+  /** Assinante atendido, em porta própria: nome ou código. */
+  subscriber?: string;
 }
 
 /** Propriedades de uma feature do editor. `kind` decide quais opcionais se aplicam. */
@@ -84,6 +86,7 @@ export interface NetworkSummary {
   countByKind: Partial<Record<ElementKind, number>>;
   cableMeters: number;
   ports: Record<PortStatus, number>;
+  sharedPorts: number;
 }
 
 export function summarize(features: ElementFeature[]): NetworkSummary {
@@ -91,11 +94,44 @@ export function summarize(features: ElementFeature[]): NetworkSummary {
     countByKind: {},
     cableMeters: 0,
     ports: { free: 0, reserved: 0, in_use: 0, defective: 0 },
+    sharedPorts: 0,
   };
   for (const { properties } of features) {
     summary.countByKind[properties.kind] = (summary.countByKind[properties.kind] ?? 0) + 1;
     summary.cableMeters += properties.lengthMeters ?? 0;
-    for (const port of properties.ports ?? []) summary.ports[port.status] += 1;
+    for (const port of properties.ports ?? []) {
+      summary.ports[port.status] += 1;
+      if (port.shared) summary.sharedPorts += 1;
+    }
   }
   return summary;
+}
+
+/**
+ * Traz dados gravados com o vocabulário antigo para o atual: o elemento
+ * "cliente" virou "assinante", e a porta deixou de apontar um provedor para
+ * apenas dizer se é compartilhada.
+ */
+export function migrateCollection(collection: ElementCollection): ElementCollection {
+  type LegacyPort = CtoPort & { providerId?: string; customerName?: string };
+  type LegacyKind = ElementKind | "customer";
+  return {
+    ...collection,
+    features: collection.features.map((feature) => {
+      const kind = feature.properties.kind as LegacyKind;
+      const ports = feature.properties.ports?.map(({ providerId, customerName, ...port }: LegacyPort): CtoPort => ({
+        ...port,
+        ...(providerId || port.shared ? { shared: true } : {}),
+        ...(customerName && !providerId ? { subscriber: port.subscriber ?? customerName } : {}),
+      }));
+      return {
+        ...feature,
+        properties: {
+          ...feature.properties,
+          kind: kind === "customer" ? "subscriber" : kind,
+          ...(ports ? { ports } : {}),
+        },
+      };
+    }),
+  };
 }

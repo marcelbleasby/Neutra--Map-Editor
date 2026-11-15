@@ -12,7 +12,7 @@ import { clearPendingImport, peekPendingImport, prepareImport, type ImportDraft 
 import { ImportDialog } from "@/features/import/ImportDialog";
 import { buildOpticalModel, type OpticalData } from "@/features/diagram/model";
 import { NodeDiagram } from "@/features/diagram/NodeDiagram";
-import { DEMO_PROVIDERS, getProject, loadOptical, saveOptical } from "@/lib/storage";
+import { getProject, loadOptical, saveOptical } from "@/lib/storage";
 import { computeRoutes } from "./network";
 import { Inspector } from "./Inspector";
 import type { ElementFeature } from "./model";
@@ -171,7 +171,6 @@ function Workspace({ project }: { project: Project }) {
           <Inspector
             features={features}
             selected={selected}
-            providers={DEMO_PROVIDERS}
             onChange={updateProperties}
             onSelect={selectElement}
             onDelete={deleteSelected}

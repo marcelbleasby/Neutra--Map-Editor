@@ -37,7 +37,7 @@ const POINT_RULES: [RegExp, ElementKind][] = [
   [/\b(POP|OLT|CENTRAL|HEADEND|DATACENTER|DATA CENTER)\b/, "pop"],
   [/\b(POSTE|PST)\b|^P \d+$/, "pole"],
   [/\b(CS|SUBTERRANEA|CAIXA DE PASSAGEM|CP)\b/, "chamber"],
-  [/\b(CLIENTE|ASSINANTE|ONU|ONT)\b/, "customer"],
+  [/\b(CLIENTE|ASSINANTE|ONU|ONT)\b/, "subscriber"],
 ];
 
 const BACKBONE = /\b(BACKBONE|TRONCO|FEEDER|ANEL|INTERLIGACAO|BKB)\b/;

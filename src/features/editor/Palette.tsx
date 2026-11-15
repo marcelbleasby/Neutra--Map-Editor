@@ -5,7 +5,7 @@ import type { ElementKind } from "@/domain/types";
 
 const HINT: Record<GeometryType, string> = {
   Point: "Clique no mapa para posicionar.",
-  LineString: "Clique para cada vértice; duplo clique termina. Pontas grudam em POP, CEO, CTO e cliente.",
+  LineString: "Clique para cada vértice; duplo clique termina. Pontas grudam em POP, CEO, CTO e assinante.",
   Polygon: "Clique para cada vértice; duplo clique fecha a área.",
 };
 

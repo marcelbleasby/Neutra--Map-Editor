@@ -29,10 +29,10 @@ export interface Impact {
   /** Nós que perdem o caminho até o POP. */
   nodes: ElementFeature[];
   ctos: number;
-  customers: number;
+  subscribers: number;
   portsInUse: number;
-  /** Provedores com porta reservada ou em uso nas CTOs afetadas. */
-  providerIds: Id[];
+  /** Portas compartilhadas, reservadas ou em uso, nas CTOs afetadas. */
+  sharedPorts: number;
 }
 
 export type IssueSeverity = "error" | "warning";
@@ -138,20 +138,20 @@ export function impactOf(element: ElementFeature, features: ElementFeature[], ro
   const nodes = downstreamOf(element, features, routes);
   // A própria CTO também conta: se ela cai, as portas dela caem.
   const affected = element.properties.kind === "cto" ? [element, ...nodes] : nodes;
-  const providerIds = new Set<Id>();
+  let sharedPorts = 0;
   let portsInUse = 0;
   for (const { properties } of affected) {
     for (const port of properties.ports ?? []) {
       if (port.status === "in_use") portsInUse += 1;
-      if (port.providerId && port.status !== "free") providerIds.add(port.providerId);
+      if (port.shared && port.status !== "free") sharedPorts += 1;
     }
   }
   return {
     nodes,
     ctos: affected.filter((feature) => feature.properties.kind === "cto").length,
-    customers: affected.filter((feature) => feature.properties.kind === "customer").length,
+    subscribers: affected.filter((feature) => feature.properties.kind === "subscriber").length,
     portsInUse,
-    providerIds: [...providerIds],
+    sharedPorts,
   };
 }
 
@@ -191,7 +191,7 @@ export function estimateLoss(route: Route, byId: Map<Id, ElementFeature>): LossE
   };
 }
 
-const NEEDS_ROUTE: NodeKind[] = ["ceo", "cto", "customer"];
+const NEEDS_ROUTE: NodeKind[] = ["ceo", "cto", "subscriber"];
 
 function listKinds(kinds: NodeKind[]): string {
   return kinds.map((kind) => ELEMENTS[kind].label).join(", ");
@@ -226,7 +226,7 @@ export function findIssues(
       if (invalid) {
         add("error", `${ELEMENTS[kind].label} não termina em ${ELEMENTS[invalid].label} (aceita: ${listKinds(allowed)})`);
       } else if (kind === "cable_drop" && endKinds.length === 2 && endKinds[0] === endKinds[1]) {
-        add("error", "Drop liga uma CTO a um cliente");
+        add("error", "Drop liga uma CTO a um assinante");
       }
       continue;
     }

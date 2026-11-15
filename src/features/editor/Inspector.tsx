@@ -10,7 +10,7 @@ import {
   isCableKind,
 } from "@/domain/catalog";
 import type { OpticalModel } from "@/domain/opticalGraph";
-import type { Id, LifecycleStatus, PortStatus, Provider } from "@/domain/types";
+import type { Id, LifecycleStatus, PortStatus } from "@/domain/types";
 import { describeTrace, nodeHasDiagram, traceCto } from "@/features/diagram/model";
 import {
   CTO_PORT_OPTIONS,
@@ -25,6 +25,8 @@ import { analyzeNetwork, estimateLoss, impactOf, type Issue, type NetworkAnalysi
 const FIELD = "w-full rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-900";
 const LABEL = "mb-1 block text-xs font-medium text-slate-600";
 const SECTION = "border-t border-slate-200 pt-3";
+/** Marca das portas compartilhadas na grade da CTO. */
+const SHARED_COLOR = "#7c3aed";
 const HEADING = "mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500";
 
 function formatMeters(meters: number) {
@@ -113,6 +115,13 @@ function Summary({
                 <dd className="text-right font-medium tabular-nums text-slate-900">{summary.ports[status]}</dd>
               </div>
             ))}
+            <div className="contents">
+              <dt className="flex items-center gap-2 text-slate-600">
+                <span className="h-1 w-2.5 rounded-sm" style={{ background: SHARED_COLOR }} />
+                Compartilhadas
+              </dt>
+              <dd className="text-right font-medium tabular-nums text-slate-900">{summary.sharedPorts}</dd>
+            </div>
           </dl>
         </div>
       )}
@@ -137,16 +146,13 @@ function Summary({
 
 function PortEditor({
   ports,
-  providers,
   onChange,
 }: {
   ports: CtoPort[];
-  providers: Provider[];
   onChange: (ports: CtoPort[]) => void;
 }) {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const open = ports.find((port) => port.index === openIndex);
-  const providerColor = (id?: Id) => providers.find((provider) => provider.id === id)?.color;
 
   const patch = (changes: Partial<CtoPort>) => {
     onChange(ports.map((port) => (port.index === openIndex ? { ...port, ...changes } : port)));
@@ -178,14 +184,14 @@ function PortEditor({
             key={port.index}
             type="button"
             aria-pressed={openIndex === port.index}
-            aria-label={`Porta ${port.index}: ${PORT_STATUS_LABELS[port.status]}`}
+            aria-label={`Porta ${port.index}: ${PORT_STATUS_LABELS[port.status]}${port.shared ? ", compartilhada" : ""}`}
             onClick={() => setOpenIndex(openIndex === port.index ? null : port.index)}
             className={`aspect-square rounded text-[11px] font-medium text-slate-900 ${
               openIndex === port.index ? "ring-2 ring-slate-900 ring-offset-1" : ""
             }`}
             style={{
               background: PORT_STATUS_COLORS[port.status],
-              boxShadow: providerColor(port.providerId) && `inset 0 -3px 0 ${providerColor(port.providerId)}`,
+              boxShadow: port.shared ? `inset 0 -3px 0 ${SHARED_COLOR}` : undefined,
             }}
           >
             {port.index}
@@ -209,30 +215,32 @@ function PortEditor({
               ))}
             </select>
           </label>
-          <label>
-            <span className={LABEL}>Provedor</span>
-            <select
-              className={FIELD}
-              value={open.providerId ?? ""}
-              onChange={(event) => patch({ providerId: event.target.value || undefined })}
-            >
-              <option value="">Sem provedor</option>
-              {providers.map((provider) => (
-                <option key={provider.id} value={provider.id}>
-                  {provider.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            <span className={LABEL}>Cliente</span>
+          <label className="flex items-center gap-2 text-sm text-slate-900">
             <input
-              className={FIELD}
-              value={open.customerName ?? ""}
-              placeholder="Nome ou código do assinante"
-              onChange={(event) => patch({ customerName: event.target.value || undefined })}
+              type="checkbox"
+              checked={open.shared ?? false}
+              onChange={(event) =>
+                patch(event.target.checked ? { shared: true, subscriber: undefined } : { shared: undefined })
+              }
             />
+            Porta compartilhada
           </label>
+          {open.shared ? (
+            <p className="text-xs leading-relaxed text-slate-600">
+              Fica à disposição de outra Empresa. Quem a usa será indicado pelo pedido aceito no marketplace, quando
+              essa integração existir.
+            </p>
+          ) : (
+            <label>
+              <span className={LABEL}>Assinante</span>
+              <input
+                className={FIELD}
+                value={open.subscriber ?? ""}
+                placeholder="Nome ou código"
+                onChange={(event) => patch({ subscriber: event.target.value || undefined })}
+              />
+            </label>
+          )}
         </div>
       )}
     </div>
@@ -244,20 +252,18 @@ function TopologySection({
   selected,
   features,
   analysis,
-  providers,
   onSelect,
 }: {
   selected: ElementFeature;
   features: ElementFeature[];
   analysis: NetworkAnalysis;
-  providers: Provider[];
   onSelect: (id: Id) => void;
 }) {
   const { kind } = selected.properties;
   if (kind === "coverage_area") return null;
 
   const route = analysis.routes.get(selected.id);
-  const loss = route && (kind === "cto" || kind === "customer") ? estimateLoss(route, analysis.byId) : null;
+  const loss = route && (kind === "cto" || kind === "subscriber") ? estimateLoss(route, analysis.byId) : null;
   const impact = impactOf(selected, features, analysis.routes);
   const hasImpact = impact.nodes.length > 0 || impact.portsInUse > 0;
   const showsRoute = ELEMENTS[kind].cableEndpoint && kind !== "pop";
@@ -330,25 +336,11 @@ function TopologySection({
                 <dd className="text-right tabular-nums text-slate-900">{impact.ctos}</dd>
                 <dt className="text-slate-600">Portas em uso</dt>
                 <dd className="text-right tabular-nums text-slate-900">{impact.portsInUse}</dd>
-                <dt className="text-slate-600">Clientes no mapa</dt>
-                <dd className="text-right tabular-nums text-slate-900">{impact.customers}</dd>
+                <dt className="text-slate-600">Portas compartilhadas</dt>
+                <dd className="text-right tabular-nums text-slate-900">{impact.sharedPorts}</dd>
+                <dt className="text-slate-600">Assinantes no mapa</dt>
+                <dd className="text-right tabular-nums text-slate-900">{impact.subscribers}</dd>
               </dl>
-              {impact.providerIds.length > 0 && (
-                <ul className="mt-2 flex flex-wrap gap-1">
-                  {impact.providerIds.map((providerId) => {
-                    const provider = providers.find((candidate) => candidate.id === providerId);
-                    return (
-                      <li
-                        key={providerId}
-                        className="flex items-center gap-1 rounded-full border border-slate-200 px-2 py-0.5 text-xs text-slate-700"
-                      >
-                        <span className="size-2 rounded-full" style={{ background: provider?.color ?? "#94a3b8" }} />
-                        {provider?.name ?? providerId}
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
             </>
           ) : (
             <p className="text-slate-500">Nada depende dele.</p>
@@ -387,7 +379,6 @@ function OpticalSummary({
 export function Inspector({
   features,
   selected,
-  providers,
   onChange,
   onSelect,
   onDelete,
@@ -396,7 +387,6 @@ export function Inspector({
 }: {
   features: ElementFeature[];
   selected: ElementFeature | null;
-  providers: Provider[];
   onChange: (id: Id, patch: Partial<ElementProperties>) => void;
   onSelect: (id: Id) => void;
   onDelete: () => void;
@@ -495,7 +485,6 @@ export function Inspector({
         <PortEditor
           key={id}
           ports={properties.ports ?? []}
-          providers={providers}
           onChange={(ports) => onChange(id, { ports })}
         />
       )}
@@ -518,7 +507,6 @@ export function Inspector({
         selected={selected}
         features={features}
         analysis={analysis}
-        providers={providers}
         onSelect={onSelect}
       />
 

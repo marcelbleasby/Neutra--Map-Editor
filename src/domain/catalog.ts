@@ -76,11 +76,11 @@ export const ELEMENTS: Record<ElementKind, ElementDefinition> = {
     description: "Sobra de cabo para manutenção",
     passThrough: true,
   },
-  customer: {
-    kind: "customer",
+  subscriber: {
+    kind: "subscriber",
     geometry: "Point",
-    label: "Cliente",
-    prefix: "CLI",
+    label: "Assinante",
+    prefix: "ASN",
     color: "#2563eb",
     description: "Ponto de instalação do assinante",
     cableEndpoint: true,
@@ -122,7 +122,7 @@ export const ELEMENTS: Record<ElementKind, ElementDefinition> = {
 export const ELEMENT_KINDS = Object.keys(ELEMENTS) as ElementKind[];
 
 export const PALETTE_GROUPS: { title: string; kinds: ElementKind[] }[] = [
-  { title: "Equipamentos", kinds: ["pop", "ceo", "cto", "customer"] },
+  { title: "Equipamentos", kinds: ["pop", "ceo", "cto", "subscriber"] },
   { title: "Infraestrutura", kinds: ["pole", "chamber", "reserve"] },
   { title: "Cabos", kinds: ["cable_backbone", "cable_distribution", "cable_drop"] },
   { title: "Áreas", kinds: ["coverage_area"] },
@@ -151,12 +151,12 @@ export const PORT_STATUS_COLORS: Record<PortStatus, string> = {
 
 /**
  * Em que tipos de nó cada cabo pode terminar. Um drop liga exatamente uma CTO a
- * um cliente; os demais aceitam qualquer combinação dos tipos listados.
+ * um assinante; os demais aceitam qualquer combinação dos tipos listados.
  */
 export const CABLE_ENDPOINTS: Record<CableKind, NodeKind[]> = {
   cable_backbone: ["pop", "ceo"],
   cable_distribution: ["pop", "ceo", "cto"],
-  cable_drop: ["cto", "customer"],
+  cable_drop: ["cto", "subscriber"],
 };
 
 /** Razões de splitter aceitas em CEO (1º nível). 0 = caixa só de emenda. */

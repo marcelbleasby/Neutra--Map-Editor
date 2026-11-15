@@ -50,7 +50,7 @@ export interface SnappedCable {
  * que transforma um desenho em topologia: sem `fromNodeId` / `toNodeId` o cabo é
  * só uma linha.
  *
- * - As pontas grudam em nós onde cabo termina (POP, CEO, CTO, cliente).
+ * - As pontas grudam em nós onde cabo termina (POP, CEO, CTO, assinante).
  * - Os vértices intermediários grudam em nós de passagem (poste, caixa, reserva).
  */
 export function snapCable(

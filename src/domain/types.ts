@@ -17,13 +17,13 @@ export type IsoDateTime = string;
 export type LngLat = [number, number];
 
 // ---------------------------------------------------------------------------
-// Organização: empresa, usuários, projetos e provedores (rede neutra)
+// Organização: empresa, usuários e projetos
 // ---------------------------------------------------------------------------
 
 /**
- * Empresa dona/operadora da infraestrutura (a operadora de rede neutra).
- * É a `Organization` do serviço de identidade: `id` é o `organization_id` usado
- * por todos os serviços da plataforma (ver docs/09-integracao-identidade.md).
+ * Empresa: organização da plataforma, no perfil Seller. É um provedor dono da
+ * própria rede. `id` é o `organization_id` usado por todos os serviços
+ * (ver GLOSSARY.md e docs/12-portal-da-plataforma.md).
  */
 export interface Company {
   id: Id;
@@ -37,10 +37,29 @@ export interface User {
   email: string;
 }
 
-/** Papéis do serviço de identidade; vêm no campo `role` do token. */
-export type CompanyRole = "owner" | "admin" | "technician" | "sales" | "lead_technician";
+/** Papéis de Seller do serviço de identidade; vêm no campo `roles` do token. */
+export type CompanyRole =
+  | "seller_owner"
+  | "seller_operations"
+  | "seller_technical"
+  | "seller_commercial"
+  | "seller_support"
+  | "seller_finance";
 
-/** Vínculo usuário ↔ empresa. Um usuário pode pertencer a várias empresas. */
+/** O que cada papel pode fazer no editor. */
+export type EditorAccess = "edit_network" | "edit_links" | "read" | "none";
+
+export const ROLE_ACCESS: Record<CompanyRole, EditorAccess> = {
+  seller_owner: "edit_network",
+  seller_operations: "edit_network",
+  // Liga fibras e altera situação de elementos e portas; não redesenha a rede.
+  seller_technical: "edit_links",
+  seller_commercial: "read",
+  seller_support: "read",
+  seller_finance: "none",
+};
+
+/** Vínculo usuário ↔ empresa. Na plataforma, um usuário tem um único vínculo ativo. */
 export interface CompanyMembership {
   userId: Id;
   companyId: Id;
@@ -48,8 +67,9 @@ export interface CompanyMembership {
 }
 
 /**
- * Projeto: recorte da rede (cidade, bairro, expansão). É a unidade de trabalho
- * do editor — cada projeto tem seu mapa, seus elementos e seus membros.
+ * Projeto: recorte da rede de uma Empresa (uma cidade, várias, ou parte de uma).
+ * Um POP e tudo que ele alimenta ficam no mesmo projeto. Na plataforma, é um
+ * rascunho de cobertura da geo (docs/adr/0003).
  */
 export interface Project {
   id: Id;
@@ -61,31 +81,6 @@ export interface Project {
   zoom: number;
   createdAt: IsoDateTime;
   updatedAt: IsoDateTime;
-}
-
-/** Papel dentro de um projeto. `field` = técnico de campo (edita status, não topologia). */
-export type ProjectRole = "manager" | "designer" | "field" | "viewer";
-
-/** Um usuário participa de vários projetos da empresa, com papel por projeto. */
-export interface ProjectMembership {
-  userId: Id;
-  projectId: Id;
-  role: ProjectRole;
-}
-
-/**
- * Provedor (ISP) que contrata capacidade da rede neutra. Não é dono da
- * infraestrutura: aluga portas/fibras e é dono da relação com o assinante.
- */
-export interface Provider {
-  id: Id;
-  companyId: Id;
-  name: string;
-  document?: string;
-  /** Cor usada no mapa e nos diagramas para identificar o provedor. */
-  color: string;
-  /** VLAN/S-VLAN de entrega, quando o modelo for bitstream. */
-  serviceVlan?: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -103,7 +98,7 @@ export type NodeKind =
   | "pole" // poste
   | "chamber" // caixa subterrânea
   | "reserve" // reserva técnica de cabo
-  | "customer"; // ponto de instalação do assinante
+  | "subscriber"; // ponto de instalação do assinante
 
 /** Elementos lineares. */
 export type CableKind =
@@ -204,6 +199,13 @@ export interface Port {
   slot?: number;
   index: number;
   status: PortStatus;
+  /** Porta compartilhada: fica à disposição de outra Empresa (GLOSSARY.md). */
+  shared?: boolean;
+  /**
+   * Assinante atendido, em portas próprias: só um nome ou código. O cadastro é
+   * do sistema de gestão da Empresa, não do editor.
+   */
+  subscriber?: string;
 }
 
 /** Uma ponta de fibra ou uma porta: os vértices do grafo óptico. */
@@ -227,56 +229,25 @@ export interface Connection {
 }
 
 // ---------------------------------------------------------------------------
-// Camada comercial: rede neutra e assinantes
+// Rede neutra: portas compartilhadas
 // ---------------------------------------------------------------------------
 
-/** O que pode ser cedido a um provedor. */
-export type LeasableResource =
-  | { type: "port"; portId: Id } // porta de CTO, saída de splitter, porta PON
-  | { type: "fiber"; fiberId: Id }; // fibra apagada
-
-export type LeaseStatus = "reserved" | "active" | "suspended" | "terminated";
+export type PortShareStatus = "active" | "suspended" | "ended";
 
 /**
- * Cessão de um recurso da rede neutra a um provedor. É o registro que responde
- * "de quem é esta porta?" e sustenta ocupação e faturamento por provedor.
+ * Compartilhamento: uso de uma porta compartilhada por outra Empresa. Nasce de um
+ * pedido aceito no marketplace — o editor não cria, só indica qual porta atende o
+ * pedido (docs/adr/0005). Uma porta tem no máximo um compartilhamento ativo.
  */
-export interface Lease {
+export interface PortShare {
   id: Id;
   projectId: Id;
-  providerId: Id;
-  resource: LeasableResource;
-  status: LeaseStatus;
-  startsAt: IsoDateTime;
-  endsAt?: IsoDateTime;
-}
-
-/** Assinante final. Pertence a um provedor, nunca diretamente à operadora neutra. */
-export interface Customer {
-  id: Id;
-  projectId: Id;
-  providerId: Id;
-  /** Identificador no ERP/CRM do provedor. */
-  externalId?: string;
-  name: string;
-  /** Nó `customer` no mapa. */
-  nodeId?: Id;
-}
-
-export type ServiceStatus = "pending_install" | "active" | "suspended" | "cancelled";
-
-/**
- * Serviço instalado: amarra assinante → ONU → porta da CTO. A partir da porta
- * da CTO o caminho até a OLT é derivado do grafo óptico, não duplicado aqui.
- */
-export interface Service {
-  id: Id;
-  projectId: Id;
-  customerId: Id;
-  ctoPortId: Id;
-  onuEquipmentId?: Id;
-  dropCableId?: Id;
-  status: ServiceStatus;
+  portId: Id;
+  /** `organization_id` da Empresa que usa a porta. */
+  partnerCompanyId: Id;
+  /** Pedido do marketplace que originou o compartilhamento. */
+  orderId: Id;
+  status: PortShareStatus;
 }
 
 // ---------------------------------------------------------------------------
@@ -296,8 +267,7 @@ export type AlarmType =
 /** Do que o alarme fala. Sempre resolvível para um ponto no mapa. */
 export type AlarmSubject =
   | { type: "equipment"; equipmentId: Id }
-  | { type: "port"; portId: Id }
-  | { type: "service"; serviceId: Id };
+  | { type: "port"; portId: Id };
 
 export interface Alarm {
   id: Id;

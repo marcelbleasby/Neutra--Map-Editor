@@ -35,17 +35,18 @@ function cable(
  */
 function network(): ElementFeature[] {
   const cto1Ports = makeCtoPorts(8);
-  cto1Ports[0] = { index: 1, status: "in_use", providerId: "alfa", customerName: "Maria" };
-  cto1Ports[1] = { index: 2, status: "reserved", providerId: "beta" };
+  cto1Ports[0] = { index: 1, status: "in_use", subscriber: "Maria" };
+  cto1Ports[1] = { index: 2, status: "reserved", shared: true };
   const cto2Ports = makeCtoPorts(8);
-  cto2Ports[0] = { index: 1, status: "in_use", providerId: "alfa" };
+  cto2Ports[0] = { index: 1, status: "in_use", shared: true };
+  cto2Ports[1] = { index: 2, status: "free", shared: true };
   return [
     node("POP", "pop"),
     node("CEO1", "ceo", { splitRatio: 8 }),
     node("CTO1", "cto", { ports: cto1Ports }),
     node("CTO2", "cto", { ports: cto2Ports }),
     node("CTO3", "cto", { ports: makeCtoPorts(8) }),
-    node("CLI1", "customer"),
+    node("CLI1", "subscriber"),
     node("PST", "pole"),
     cable("bkb", "cable_backbone", "POP", "CEO1", 2000),
     cable("d1", "cable_distribution", "CEO1", "CTO1", 500),
@@ -58,7 +59,7 @@ describe("rota até o POP", () => {
   const features = network();
   const routes = computeRoutes(features);
 
-  it("percorre os cabos do POP até o cliente", () => {
+  it("percorre os cabos do POP até o assinante", () => {
     expect(routes.get("CLI1")).toEqual({
       popId: "POP",
       nodeIds: ["POP", "CEO1", "CTO1", "CLI1"],
@@ -89,12 +90,12 @@ describe("impacto de falha", () => {
     expect(ids("CTO3")).toEqual([]);
   });
 
-  it("resume CTOs, portas, clientes e provedores afetados", () => {
+  it("resume CTOs, portas, assinantes e portas compartilhadas afetados", () => {
     expect(impactOf(byId.get("bkb")!, features, routes)).toMatchObject({
       ctos: 2,
-      customers: 1,
+      subscribers: 1,
       portsInUse: 2,
-      providerIds: ["alfa", "beta"],
+      sharedPorts: 2, // a compartilhada livre não conta
     });
   });
 
@@ -134,8 +135,8 @@ describe("pendências", () => {
       cable("drop2", "cable_drop", "CTO1", "CTO2", 100),
     ];
     expect(messages(features, "solto")).toEqual(["Uma ponta do cabo está solta"]);
-    expect(messages(features, "errado")[0]).toMatch(/não termina em Cliente/);
-    expect(messages(features, "drop2")).toEqual(["Drop liga uma CTO a um cliente"]);
+    expect(messages(features, "errado")[0]).toMatch(/não termina em Assinante/);
+    expect(messages(features, "drop2")).toEqual(["Drop liga uma CTO a um assinante"]);
   });
 
   it("acusa orçamento estourado e mais drops do que portas", () => {
@@ -146,7 +147,7 @@ describe("pendências", () => {
 
     const crowded = network();
     crowded.find((f) => f.id === "CTO2")!.properties.ports = [];
-    crowded.push(node("CLI2", "customer"), cable("drop2", "cable_drop", "CTO2", "CLI2", 50));
+    crowded.push(node("CLI2", "subscriber"), cable("drop2", "cable_drop", "CTO2", "CLI2", 50));
     expect(messages(crowded, "CTO2")).toContain("1 drops para 0 portas");
   });
 });

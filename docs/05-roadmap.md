@@ -7,13 +7,16 @@
 - Persistência local, exportação GeoJSON.
 - Modelo de domínio completo em `src/domain/types.ts`.
 
-## Fase 1 — Integração com a API existente
+## Fase 1 — Integração com a plataforma Neutra+
 
-Depende de receber o repositório da API.
+Ver `docs/07-integracao-geo.md`.
 
-- Comparar o modelo da API com `src/domain/types.ts` e alinhar nomes e entidades.
-- Login e sessão usando a autenticação da API; empresas, membros e papéis por projeto.
-- `src/lib/storage.ts` passa a chamar a API no lugar do `localStorage`.
+- Login e sessão com o JWT da plataforma; intermediário que injeta a organização.
+- Áreas de cobertura e nós gravados na `geo-api-neutra`; busca por endereço via
+  `/geocode`.
+- **Definir onde moram cabos e topologia** — hoje nenhum serviço os guarda. Até lá,
+  cabos continuam no `localStorage`.
+- Empresas, membros e papéis por projeto (a plataforma não tem projeto hoje).
 - Cadastro de provedores.
 - Portas de CTO deixam de ser `CtoPort` e passam a `Port` + `Lease` + `Service`.
 - Configuração por ambiente e publicação na VPS.
@@ -56,7 +59,7 @@ Ver `docs/06-integracao-snmp.md`.
 
 | Decisão | Definição |
 | --- | --- |
-| Dados | API já existente, em repositório próprio. Sem banco nem ORM neste projeto. |
+| Dados | Serviços da plataforma Neutra+. Sem banco nem ORM neste projeto. Áreas e pontos na `geo-api-neutra` (`docs/07-integracao-geo.md`). |
 | Hospedagem | VPS própria, com ambientes separados. |
 | Modelo de cessão | Começa por porta de CTO; o tipo já admite saída de splitter, porta PON e fibra apagada. |
 | SNMP | Coletor `snmp-api-neutra`, em repositório próprio; analisado em `docs/06-integracao-snmp.md`. |
@@ -65,10 +68,12 @@ Ver `docs/06-integracao-snmp.md`.
 
 | Decisão | Opções | Recomendação |
 | --- | --- | --- |
-| Autenticação | A que a API oferece | Confirmar ao analisar o repositório da API |
+| Dono da topologia | Ampliar a `geo-api-neutra` ou criar serviço de inventário | Ampliar a geo: já tem PostGIS e os pontos de rede |
+| Projeto | Existe na plataforma ou o editor introduz | Confirmar com o time |
+| Autenticação | JWT da plataforma | Confirmar como o front-end obtém o token |
 | Visão do provedor | Mesmo app com papel restrito, ou portal separado | Mesmo app, até haver demanda |
 | Onde nascem os alarmes | No coletor ou na API principal | No coletor, publicando na fila RabbitMQ que ele já usa |
-| `organizationId` do coletor | Operadora neutra ou provedor | Confirmar com o time; numa rede neutra a OLT é da operadora |
+| `organization_id` (geo e SNMP) | Operadora neutra ou provedor | Confirmar com o time; numa rede neutra a OLT é da operadora |
 | Mapa base | Só Mapbox, ou também satélite/ortofoto própria | Mapbox ruas + satélite |
 | Campo | PWA ou app nativo | PWA primeiro |
 

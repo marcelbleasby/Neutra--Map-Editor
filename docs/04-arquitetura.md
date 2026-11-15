@@ -10,8 +10,8 @@
 | Geometria | Turf (`@turf/length`) | em uso |
 | Testes | Vitest (regras puras) | em uso |
 | Persistência | `localStorage` atrás de `src/lib/storage.ts` | provisório |
-| Dados | API já existente, em repositório próprio | a integrar |
-| Autenticação | a que a API já oferece | a confirmar |
+| Dados | `geo-api-neutra` (áreas e pontos); topologia ainda sem serviço dono | a integrar |
+| Autenticação | JWT da plataforma Neutra+ (`neutramais-auth-lib`) | a confirmar |
 | Coletor SNMP | serviço já existente, em repositório próprio | a integrar |
 | Hospedagem | VPS própria, com ambientes separados | definido |
 
@@ -81,22 +81,23 @@ conexões entre eles. Opera sobre `Fiber`, `Port` e `Connection`.
 
 ## Persistência e API
 
-A API já existe e está em desenvolvimento em outro repositório. Este projeto não terá
-banco nem ORM próprios: `src/lib/storage.ts` passa a chamar a API, e suas assinaturas
-viram assíncronas.
+Este projeto não terá banco nem ORM próprios: `src/lib/storage.ts` passa a chamar
+os serviços da plataforma Neutra+, e suas assinaturas viram assíncronas.
 
-Ao receber o repositório da API, levantar:
+O serviço analisado até aqui é a `geo-api-neutra` (ver `docs/07-integracao-geo.md`):
 
-- Como ela autentica e como identifica empresa e projeto em cada chamada.
-- Quais entidades de `src/domain/types.ts` já existem nela e com que nomes — o modelo
-  daqui se ajusta ao da API, não o contrário.
-- Se há leitura por área visível (bbox) e escrita por elemento; o mapa precisa das duas.
-- Como trata edição concorrente (versão por elemento, rejeição de escrita desatualizada).
-- URL base por ambiente, configurada por variável de ambiente.
+- Guarda **áreas de cobertura** (polígonos) e **pontos de rede**, por organização.
+  Áreas e nós do editor encaixam nela.
+- **Não guarda linhas nem topologia.** Cabos, fibras, portas, fusões e cessões não têm
+  serviço dono hoje — é a principal pendência da integração.
+- Não tem conceito de projeto, nem leitura por área visível, nem controle de versão.
+- A organização é informada por quem chama, e não há CORS: o navegador fala com um
+  intermediário (Route Handler do Next ou *gateway* da plataforma) que injeta a
+  organização a partir da sessão.
 
 O que o editor precisa e a API talvez ainda não tenha vira pedido para o time da API,
-não Route Handler aqui. Route Handlers do Next ficam reservados a necessidades do
-próprio front-end (por exemplo, esconder um segredo do navegador).
+não regra de negócio aqui. Route Handlers do Next ficam reservados a intermediar as
+chamadas (sessão, organização, segredos), sem guardar dados.
 
 ## Integração SNMP (futura)
 

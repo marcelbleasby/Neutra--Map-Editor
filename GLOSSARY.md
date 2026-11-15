@@ -31,6 +31,13 @@ _Avoid_: Caixa (sozinha), caixa de emenda
 
 ### Rede óptica
 
+**Ligação declarada**:
+Ligação que alguém da Empresa registrou. É a que vale como documentação da rede.
+
+**Ligação inferida**:
+Ligação que a plataforma deduz da proximidade entre elementos de um arquivo importado. É uma sugestão até alguém aceitá-la.
+_Avoid_: Ligação automática
+
 **Ligação**:
 União de duas pontas (fibra ou porta) dentro de um POP, de uma CEO ou de uma CTO. Tem três tipos: fusão, conector e cordão.
 _Avoid_: Conexão, emenda, fusão (como termo geral)
@@ -64,6 +71,10 @@ _Avoid_: Viabilidade (para este sentido)
 **Viabilidade**:
 Um endereço tem viabilidade quando há ao menos uma CTO com porta livre a até 250 m dele, em linha reta. Pode haver mais de uma CTO nessa condição. Só a Empresa dona da rede consulta.
 _Avoid_: Cobertura (para este sentido), disponibilidade, feasibility
+
+**Assinante**:
+Quem é atendido por uma porta de CTO. No editor é apenas um nome ou código anotado na porta; o cadastro pertence ao sistema de gestão da Empresa.
+_Avoid_: Cliente, usuário, consumidor
 
 ### Edição
 

@@ -20,6 +20,8 @@ Abra http://localhost:3000, crie um projeto e desenhe a rede.
   cabos (backbone, distribuição, drop) e áreas de cobertura.
 - Cabos grudam nos nós ao serem desenhados e acompanham o nó quando ele é movido;
   comprimento calculado automaticamente.
+- Importação de KML/KMZ, na criação do projeto ou dentro do editor: os elementos são
+  reconhecidos pelo nome, revisados em grupos e a topologia é montada automaticamente.
 - Portas da CTO com situação, provedor e cliente.
 - Topologia: caminho de cada ponto até o POP, o que cai se um elemento falhar (com os
   provedores afetados), orçamento óptico estimado e lista de pendências do desenho.
@@ -40,3 +42,4 @@ diagrama de fusões, SNMP e notificações estão planejados em [`docs/05-roadma
 - [Integração com o serviço de notificações](docs/08-integracao-notificacoes.md)
 - [Integração com o serviço de identidade](docs/09-integracao-identidade.md)
 - [Topologia](docs/10-topologia.md)
+- [Fluxos de entrada: KML/KMZ e SNMP](docs/11-fluxos-de-entrada.md)

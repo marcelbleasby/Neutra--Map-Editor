@@ -23,6 +23,7 @@ dono na plataforma.
 | Stack, estrutura, mapa, SNMP e notificações | `docs/04-arquitetura.md` |
 | Fases e decisões em aberto | `docs/05-roadmap.md` |
 | Funcionalidades de topologia: o que existe e o que falta | `docs/10-topologia.md` |
+| Como um projeto começa: do zero, de KML/KMZ ou do SNMP | `docs/11-fluxos-de-entrada.md` |
 | O que o coletor SNMP entrega e o que falta | `docs/06-integracao-snmp.md` |
 | O que a API de viabilidade entrega e o que falta | `docs/07-integracao-geo.md` |
 | O que o serviço de notificações entrega e o que falta | `docs/08-integracao-notificacoes.md` |
@@ -49,6 +50,7 @@ src/features/editor/    editor de mapa (Mapbox GL Draw) e seus painéis
   topology.ts           encaixe de cabos em nós e pontos de passagem
   network.ts            grafo físico: rota até o POP, impacto, pendências
 src/domain/opticalGraph.ts  grafo óptico: fibras, conexões, rastreamento até a PON
+src/features/import/    importação de KML/KMZ: leitura, classificação, revisão, montagem
 src/features/projects/  lista e criação de projetos
 src/lib/storage.ts      única porta de entrada para persistência (hoje localStorage)
 src/app/                rotas; páginas só compõem features

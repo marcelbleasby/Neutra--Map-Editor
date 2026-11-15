@@ -7,6 +7,8 @@
 - Topologia física: regras de ligação, pontos de passagem, rota até o POP, impacto de
   falha por provedor, orçamento óptico estimado e lista de pendências.
 - Motor do grafo óptico (fibras, portas, conexões, rastreamento até a PON), sem tela.
+- Importação de KML/KMZ com classificação pelo nome e montagem da topologia
+  (`docs/11-fluxos-de-entrada.md`).
 - Persistência local, exportação GeoJSON.
 - Modelo de domínio completo em `src/domain/types.ts`.
 
@@ -49,8 +51,9 @@ a interface.
 
 Ver `docs/06-integracao-snmp.md`.
 
-- Vincular cada OLT a um dispositivo do coletor e mostrar no mapa se está alcançável
-  (o coletor já sustenta isso).
+- Projeto a partir do SNMP: listar os dispositivos do coletor, posicionar os POPs e
+  vincular cada OLT (`docs/11-fluxos-de-entrada.md`); mostrar no mapa se está
+  alcançável (o coletor já sustenta isso).
 - Alarmes no mapa com correlação pela topologia — **depende de o coletor passar a
   gerar alarmes e a ler dados de PON**, o que hoje ele não faz.
 - E-mail de alarme pelo `notification-api-neutra` (precisa de modelos novos na
@@ -61,7 +64,7 @@ Ver `docs/06-integracao-snmp.md`.
 ## Fase 5 — Escala e campo
 
 - Vector tiles e carregamento por área visível.
-- Importação KML/KMZ/GeoJSON/Shapefile.
+- Importação de GeoJSON e Shapefile; KML acima de 5.000 elementos.
 - Uso em campo (PWA): localizar caixa, conferir, registrar foto.
 - Portal do provedor com acesso restrito.
 - Histórico e auditoria por elemento.

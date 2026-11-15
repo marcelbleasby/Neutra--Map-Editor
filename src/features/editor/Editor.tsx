@@ -5,8 +5,11 @@ import "@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css";
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { Project } from "@/domain/types";
+import type { BuildResult } from "@/features/import/build";
+import { clearPendingImport, peekPendingImport, prepareImport, type ImportDraft } from "@/features/import/draft";
+import { ImportDialog } from "@/features/import/ImportDialog";
 import { DEMO_PROVIDERS, getProject } from "@/lib/storage";
 import { Inspector } from "./Inspector";
 import type { ElementFeature } from "./model";
@@ -42,8 +45,55 @@ function exportGeoJson(project: Project, features: ElementFeature[]) {
 }
 
 function Workspace({ project }: { project: Project }) {
-  const { containerRef, features, selected, tool, mapError, selectTool, selectElement, updateProperties, deleteSelected } =
-    useNetworkEditor(project, MAPBOX_TOKEN);
+  const {
+    containerRef,
+    features,
+    selected,
+    tool,
+    mapError,
+    saveFailed,
+    ready,
+    addFeatures,
+    selectTool,
+    selectElement,
+    updateProperties,
+    deleteSelected,
+  } = useNetworkEditor(project, MAPBOX_TOKEN);
+
+  const fileInput = useRef<HTMLInputElement>(null);
+  // Um projeto criado a partir de um arquivo já chega com a importação pendente.
+  const [draft, setDraft] = useState<ImportDraft | null>(() => peekPendingImport(project.id));
+  const [notice, setNotice] = useState<string | null>(null);
+  const [importError, setImportError] = useState<string | null>(null);
+
+  async function handleFile(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    setImportError(null);
+    setNotice(null);
+    try {
+      setDraft(await prepareImport(file));
+    } catch (error) {
+      setImportError(error instanceof Error ? error.message : "Não foi possível ler o arquivo.");
+    }
+  }
+
+  function closeImport() {
+    clearPendingImport(project.id);
+    setDraft(null);
+  }
+
+  function handleImport(result: BuildResult) {
+    addFeatures(result.features);
+    const count = result.features.length.toLocaleString("pt-BR");
+    setNotice(
+      result.cables > 0
+        ? `${count} elementos importados. ${result.connectedCables} de ${result.cables} cabos ligados nas duas pontas; o restante aparece nas pendências.`
+        : `${count} elementos importados.`,
+    );
+    closeImport();
+  }
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -52,10 +102,25 @@ function Workspace({ project }: { project: Project }) {
           ← Projetos
         </Link>
         <h1 className="truncate text-sm font-semibold text-slate-900">{project.name}</h1>
+        <input
+          ref={fileInput}
+          type="file"
+          accept=".kml,.kmz,application/vnd.google-earth.kml+xml,application/vnd.google-earth.kmz"
+          className="sr-only"
+          aria-label="Arquivo KML ou KMZ"
+          onChange={handleFile}
+        />
+        <button
+          type="button"
+          onClick={() => fileInput.current?.click()}
+          className="ml-auto rounded-md border border-slate-300 px-2.5 py-1 text-sm text-slate-700 hover:bg-slate-100"
+        >
+          Importar KML/KMZ
+        </button>
         <button
           type="button"
           onClick={() => exportGeoJson(project, features)}
-          className="ml-auto rounded-md border border-slate-300 px-2.5 py-1 text-sm text-slate-700 hover:bg-slate-100"
+          className="rounded-md border border-slate-300 px-2.5 py-1 text-sm text-slate-700 hover:bg-slate-100"
         >
           Exportar GeoJSON
         </button>
@@ -69,11 +134,23 @@ function Workspace({ project }: { project: Project }) {
           <div className="absolute inset-0">
             <div ref={containerRef} className="size-full" />
           </div>
-          {mapError && (
-            <p role="alert" className="absolute inset-x-3 top-3 rounded-md bg-red-600 px-3 py-2 text-sm text-white shadow">
-              {mapError}
-            </p>
-          )}
+          <div className="pointer-events-none absolute inset-x-3 top-3 flex flex-col gap-2">
+            {[mapError, importError, saveFailed ? "A rede não coube no armazenamento do navegador: as alterações desta sessão não estão sendo salvas. Exporte o GeoJSON para não perder o trabalho." : null]
+              .filter(Boolean)
+              .map((message) => (
+                <p key={message} role="alert" className="rounded-md bg-red-600 px-3 py-2 text-sm text-white shadow">
+                  {message}
+                </p>
+              ))}
+            {notice && (
+              <p role="status" className="pointer-events-auto flex items-start gap-3 rounded-md bg-slate-900 px-3 py-2 text-sm text-white shadow">
+                <span className="flex-1">{notice}</span>
+                <button type="button" onClick={() => setNotice(null)} className="font-medium underline">
+                  Fechar
+                </button>
+              </p>
+            )}
+          </div>
         </div>
         <aside className="w-72 shrink-0 overflow-y-auto border-l border-slate-200 bg-white p-3">
           <Inspector
@@ -86,6 +163,9 @@ function Workspace({ project }: { project: Project }) {
           />
         </aside>
       </div>
+      {draft && (
+        <ImportDialog draft={draft} existing={features} ready={ready} onImport={handleImport} onClose={closeImport} />
+      )}
     </div>
   );
 }

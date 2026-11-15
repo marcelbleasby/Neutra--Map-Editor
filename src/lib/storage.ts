@@ -30,11 +30,13 @@ function read<T>(key: string, fallback: T): T {
   }
 }
 
-function write(key: string, value: unknown) {
+/** Devolve falso se o navegador recusou gravar (armazenamento cheio ou bloqueado). */
+function write(key: string, value: unknown): boolean {
   try {
     window.localStorage.setItem(key, JSON.stringify(value));
+    return true;
   } catch {
-    // Armazenamento cheio ou bloqueado: o editor segue funcionando em memória.
+    return false;
   }
 }
 
@@ -75,11 +77,13 @@ export function loadFeatures(projectId: Id): ElementCollection {
   return read<ElementCollection>(featuresKey(projectId), EMPTY_COLLECTION);
 }
 
-export function saveFeatures(projectId: Id, collection: ElementCollection) {
-  write(featuresKey(projectId), collection);
+/** Devolve falso se não coube: o editor segue em memória e avisa o usuário. */
+export function saveFeatures(projectId: Id, collection: ElementCollection): boolean {
+  if (!write(featuresKey(projectId), collection)) return false;
   const now = new Date().toISOString();
   write(
     PROJECTS_KEY,
     listProjects().map((project) => (project.id === projectId ? { ...project, updatedAt: now } : project)),
   );
+  return true;
 }

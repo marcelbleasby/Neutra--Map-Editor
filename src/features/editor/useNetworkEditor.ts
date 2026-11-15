@@ -36,6 +36,9 @@ export function useNetworkEditor(project: Project, accessToken: string) {
   const [selectedId, setSelectedId] = useState<Id | null>(null);
   const [tool, setTool] = useState<ElementKind | null>(null);
   const [mapError, setMapError] = useState<string | null>(null);
+  const [saveFailed, setSaveFailed] = useState(false);
+  const [ready, setReady] = useState(false);
+  const commitRef = useRef<() => void>(() => {});
 
   useEffect(() => {
     const container = containerRef.current;
@@ -81,8 +84,9 @@ export function useNetworkEditor(project: Project, accessToken: string) {
     };
 
     const commit = () => {
-      saveFeatures(project.id, { type: "FeatureCollection", features: mirror() });
+      setSaveFailed(!saveFeatures(project.id, { type: "FeatureCollection", features: mirror() }));
     };
+    commitRef.current = commit;
 
     /** Gruda as pontas nos nós próximos e recalcula o comprimento. */
     const settleCable = (cable: ElementFeature, others: ElementFeature[]): ElementFeature => {
@@ -107,6 +111,7 @@ export function useNetworkEditor(project: Project, accessToken: string) {
     map.on("load", () => {
       draw.set(loadFeatures(project.id));
       mirror();
+      setReady(true);
     });
 
     map.on("error", (event) => {
@@ -162,6 +167,7 @@ export function useNetworkEditor(project: Project, accessToken: string) {
     return () => {
       drawRef.current = null;
       mapRef.current = null;
+      setReady(false);
       map.remove();
     };
   }, [project, accessToken]);
@@ -184,12 +190,29 @@ export function useNetworkEditor(project: Project, accessToken: string) {
       const feature = draw?.get(id) as ElementFeature | undefined;
       if (!draw || !feature) return;
       draw.add({ ...feature, properties: { ...feature.properties, ...patch } });
-      const current = (draw.getAll().features as ElementFeature[]).filter((f) => f.properties?.kind);
-      setFeatures(current);
-      saveFeatures(project.id, { type: "FeatureCollection", features: current });
+      commitRef.current();
     },
-    [project.id],
+    [],
   );
+
+  /** Acrescenta elementos prontos (importação) e enquadra o mapa neles. */
+  const addFeatures = useCallback((added: ElementFeature[]) => {
+    const draw = drawRef.current;
+    if (!draw || added.length === 0) return;
+    draw.add({ type: "FeatureCollection", features: added });
+    commitRef.current();
+    const bounds = new mapboxgl.LngLatBounds();
+    for (const { geometry } of added) {
+      const positions =
+        geometry.type === "Point"
+          ? [geometry.coordinates]
+          : geometry.type === "LineString"
+            ? geometry.coordinates
+            : geometry.coordinates[0];
+      for (const position of positions) bounds.extend(position as [number, number]);
+    }
+    mapRef.current?.fitBounds(bounds, { padding: 60, maxZoom: 17, duration: 0 });
+  }, []);
 
   /** Seleciona um elemento e leva o mapa até ele (usado pela lista de pendências). */
   const selectElement = useCallback((id: Id) => {
@@ -222,6 +245,9 @@ export function useNetworkEditor(project: Project, accessToken: string) {
     selected: features.find((feature) => feature.id === selectedId) ?? null,
     tool,
     mapError,
+    saveFailed,
+    ready,
+    addFeatures,
     selectTool,
     selectElement,
     updateProperties,

@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { centerOf } from "@/features/import/build";
+import { prepareImport, setPendingImport } from "@/features/import/draft";
 import { createProject, deleteProject, DEMO_COMPANY, listProjects } from "@/lib/storage";
 
 const FIELD = "w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-900";
@@ -18,20 +20,32 @@ export default function ProjectList() {
   const [projects, setProjects] = useState(listProjects);
   const [error, setError] = useState<string | null>(null);
 
-  function handleCreate(event: React.FormEvent<HTMLFormElement>) {
+  async function handleCreate(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
     const name = String(data.get("name") ?? "").trim();
     const lat = Number(data.get("lat"));
     const lng = Number(data.get("lng"));
+    const file = data.get("file");
     if (!name) return setError("Informe o nome do projeto.");
     if (!(Math.abs(lat) <= 90) || !(Math.abs(lng) <= 180)) return setError("Latitude ou longitude inválida.");
+
+    // Com arquivo, o mapa abre na rede importada e o editor já mostra a revisão.
+    let draft = null;
+    if (file instanceof File && file.size > 0) {
+      try {
+        draft = await prepareImport(file);
+      } catch (cause) {
+        return setError(cause instanceof Error ? cause.message : "Não foi possível ler o arquivo.");
+      }
+    }
     const project = createProject({
       name,
       description: String(data.get("description") ?? "").trim() || undefined,
-      center: [lng, lat],
+      center: (draft && centerOf(draft.placemarks)) ?? [lng, lat],
       zoom: 14,
     });
+    if (draft) setPendingImport(project.id, draft);
     router.push(`/projetos/${project.id}`);
   }
 
@@ -101,6 +115,18 @@ export default function ProjectList() {
               <input name="lng" className={FIELD} inputMode="decimal" defaultValue={DEFAULT_LNG} />
             </label>
           </div>
+          <label>
+            <span className={LABEL}>Começar de um KML/KMZ (opcional)</span>
+            <input
+              name="file"
+              type="file"
+              accept=".kml,.kmz"
+              className="w-full text-sm text-slate-700 file:mr-2 file:rounded-md file:border-0 file:bg-slate-100 file:px-2.5 file:py-1.5 file:text-sm file:text-slate-900"
+            />
+            <span className="mt-1 block text-xs text-slate-500">
+              Com arquivo, o mapa abre na rede importada e a posição acima é ignorada.
+            </span>
+          </label>
           {error && (
             <p role="alert" className="text-sm text-red-700">
               {error}

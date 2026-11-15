@@ -7,9 +7,10 @@ capacidade a vários provedores. Referência de produto: Geosite Telecom.
 @AGENTS.md
 
 Este repositório é o **front-end** e faz parte da plataforma Neutra+. Os dados virão
-dos serviços dela — `geo-api-neutra` (áreas e pontos) e `snmp-api-neutra` (leituras
-SNMP) — ainda não integrados; a hospedagem é em VPS própria. Não crie banco, ORM nem
-coletor aqui. Cabos e topologia ainda não têm serviço dono na plataforma.
+dos serviços dela — `geo-api-neutra` (áreas e pontos), `snmp-api-neutra` (leituras
+SNMP) e `notification-api-neutra` (e-mail) — ainda não integrados; a hospedagem é em VPS própria. Não crie banco, ORM nem
+coletor aqui. Cabos, topologia e avisos dentro do aplicativo ainda não têm serviço
+dono na plataforma.
 
 ## Leia antes de mexer
 
@@ -22,6 +23,7 @@ coletor aqui. Cabos e topologia ainda não têm serviço dono na plataforma.
 | Fases e decisões em aberto | `docs/05-roadmap.md` |
 | O que o coletor SNMP entrega e o que falta | `docs/06-integracao-snmp.md` |
 | O que a API de viabilidade entrega e o que falta | `docs/07-integracao-geo.md` |
+| O que o serviço de notificações entrega e o que falta | `docs/08-integracao-notificacoes.md` |
 
 `src/domain/types.ts` é a referência canônica das entidades. Se mudar uma entidade,
 atualize `docs/03-modelo-de-dados.md` no mesmo commit.

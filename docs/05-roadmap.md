@@ -45,7 +45,10 @@ Ver `docs/06-integracao-snmp.md`.
   (o coletor já sustenta isso).
 - Alarmes no mapa com correlação pela topologia — **depende de o coletor passar a
   gerar alarmes e a ler dados de PON**, o que hoje ele não faz.
-- Central de notificações, preferências e canais.
+- E-mail de alarme pelo `notification-api-neutra` (precisa de modelos novos na
+  `neutramais-templates-lib`).
+- Central de avisos dentro do aplicativo, preferências e agrupamento — **sem serviço
+  dono hoje** (`docs/08-integracao-notificacoes.md`).
 
 ## Fase 5 — Escala e campo
 
@@ -70,6 +73,7 @@ Ver `docs/06-integracao-snmp.md`.
 | --- | --- | --- |
 | Dono da topologia | Ampliar a `geo-api-neutra` ou criar serviço de inventário | Ampliar a geo: já tem PostGIS e os pontos de rede |
 | Projeto | Existe na plataforma ou o editor introduz | Confirmar com o time |
+| Dono dos avisos no aplicativo | Ampliar o `notification-api-neutra` ou outro serviço | Ampliar: um ponto único para avisar, com canal `in_app` |
 | Autenticação | JWT da plataforma | Confirmar como o front-end obtém o token |
 | Visão do provedor | Mesmo app com papel restrito, ou portal separado | Mesmo app, até haver demanda |
 | Onde nascem os alarmes | No coletor ou na API principal | No coletor, publicando na fila RabbitMQ que ele já usa |

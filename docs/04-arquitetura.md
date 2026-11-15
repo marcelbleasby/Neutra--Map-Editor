@@ -12,7 +12,8 @@
 | Persistência | `localStorage` atrás de `src/lib/storage.ts` | provisório |
 | Dados | `geo-api-neutra` (áreas e pontos); topologia ainda sem serviço dono | a integrar |
 | Autenticação | JWT da plataforma Neutra+ (`neutramais-auth-lib`) | a confirmar |
-| Coletor SNMP | serviço já existente, em repositório próprio | a integrar |
+| Coletor SNMP | `snmp-api-neutra` | a integrar |
+| Notificações | `notification-api-neutra` (só e-mail) | a integrar |
 | Hospedagem | VPS própria, com ambientes separados | definido |
 
 Este repositório é o **front-end**. Banco de dados, regras de acesso e ingestão de
@@ -131,7 +132,12 @@ OLTs ──SNMP──▶ Coletor ──alarmes──▶ API principal ──▶ 
 
 ## Avisos e notificações (futuro)
 
-Duas origens, um só modelo (`Notification`):
+O serviço da plataforma é o `notification-api-neutra`, analisado em
+`docs/08-integracao-notificacoes.md`. Ele **só envia e-mail**, a partir de um evento
+no RabbitMQ. Não guarda avisos por usuário, não tem leitura, preferências nem tempo
+real — a central de avisos dentro do aplicativo ainda não tem serviço dono.
+
+O desenho-alvo, com duas origens e um só modelo (`Notification`):
 
 - **Alarmes de rede** — vindos do SNMP, com severidade.
 - **Avisos do sistema** — convite para projeto, exportação concluída, conflito de
@@ -141,7 +147,8 @@ Decisões de desenho:
 
 - Destinatários resolvidos pelos membros do projeto e suas preferências (severidade
   mínima, canal).
-- Canais: no aplicativo primeiro; e-mail e webhook depois.
+- Canais: e-mail já existe na plataforma; no aplicativo depende de serviço dono;
+  webhook depois.
 - Agrupamento: um corte de cabo gera uma notificação com a causa raiz, não uma por ONU.
 - Entrega em tempo real por Server-Sent Events; polling é aceitável na primeira versão.
 - Toda notificação de alarme leva ao elemento no mapa.

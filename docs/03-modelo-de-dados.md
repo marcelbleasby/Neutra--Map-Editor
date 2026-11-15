@@ -96,14 +96,15 @@ Uma simplificação deliberada: as portas da CTO ficam em `properties.ports`
 | `providerId` | `Lease` ativa sobre a porta |
 | `customerName` | `Service` → `Customer` |
 
-A migração para o banco deve fazer esse desdobramento.
+A integração com a API deve fazer esse desdobramento.
 
-## Banco de dados (proposta)
+## Requisitos para o banco da API
 
-PostgreSQL com PostGIS.
+O banco pertence à API, que tem repositório próprio. O que este modelo espera dele,
+a conferir quando o repositório for analisado:
 
-- Geometrias em `geometry(Point|LineString|Polygon, 4326)` com índice GiST.
-- `project_id` em toda tabela de rede, com Row-Level Security por projeto.
+- Geometrias espaciais indexadas (em PostGIS: `geometry(..., 4326)` com índice GiST).
+- `project_id` em toda tabela de rede.
 - Unicidade parcial para "no máximo uma cessão vigente por recurso":
   índice único em `(resource_type, resource_id)` onde `status in ('reserved','active')`.
 - Unicidade em `connection` para cada ponta (uma ponta, uma conexão).

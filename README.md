@@ -23,8 +23,8 @@ Abra http://localhost:3000, crie um projeto e desenhe a rede.
 - Portas da CTO com situação, provedor e cliente.
 - Resumo do projeto (contagem, metragem de cabo, ocupação de portas) e exportação GeoJSON.
 
-Os dados ficam no `localStorage` do navegador. Banco de dados, autenticação, diagrama
-de fusões, SNMP e notificações estão planejados em [`docs/05-roadmap.md`](docs/05-roadmap.md).
+Os dados ficam no `localStorage` do navegador. Integração com a API, autenticação,
+diagrama de fusões, SNMP e notificações estão planejados em [`docs/05-roadmap.md`](docs/05-roadmap.md).
 
 ## Documentação
 

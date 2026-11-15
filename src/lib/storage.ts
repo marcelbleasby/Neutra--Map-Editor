@@ -5,7 +5,7 @@ import { EMPTY_COLLECTION, type ElementCollection } from "@/features/editor/mode
  * Persistência provisória em localStorage.
  *
  * Tudo que lê ou grava dados passa por este módulo para que a troca por uma
- * API (Route Handlers + PostGIS, ver docs/03-arquitetura.md) fique contida
+ * API existente (ver docs/04-arquitetura.md) fique contida
  * aqui. As funções são síncronas hoje; ao migrar, passam a devolver Promise.
  */
 

@@ -6,6 +6,10 @@ capacidade a vários provedores. Referência de produto: Geosite Telecom.
 
 @AGENTS.md
 
+Este repositório é o **front-end**. Os dados virão de uma API já existente e os
+alarmes de um coletor SNMP já existente, ambos em repositórios próprios ainda não
+integrados; a hospedagem é em VPS própria. Não crie banco, ORM nem coletor aqui.
+
 ## Leia antes de mexer
 
 | Assunto | Arquivo |
@@ -50,7 +54,7 @@ src/app/                rotas; páginas só compõem features
   `fromNodeId`/`toNodeId`. Toda regra de conexão fica em função pura
   (`features/editor/topology.ts`, `domain/optics.ts`) com teste.
 - **Persistência só via `src/lib/storage.ts`.** Componentes não tocam em `localStorage`
-  nem farão `fetch` direto; isso mantém a troca por API contida em um arquivo.
+  nem fazem `fetch` direto; isso mantém a troca pela API contida em um arquivo.
 - **Escopo por projeto:** todo registro de rede carrega `projectId`; todo projeto,
   `companyId`. Nenhuma consulta futura pode omitir esse filtro.
 - **Unidades:** metros, dB, dBm. Coordenadas em `[lng, lat]` (ordem do GeoJSON).

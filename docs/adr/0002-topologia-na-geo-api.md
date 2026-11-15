@@ -17,3 +17,6 @@ depende de saber quais CTOs têm porta livre — é responsabilidade dela.
 - As regras de topologia do editor (`src/features/editor/network.ts`,
   `src/domain/opticalGraph.ts`) são puras para poderem ser reescritas ou reaproveitadas
   do lado do serviço sem mudar de significado.
+- A geo já caminha nessa direção: guarda as linhas do KMZ, classifica os ativos, tem
+  rascunhos editáveis e uma topologia óptica inferida em desenvolvimento
+  (`docs/12-portal-da-plataforma.md`). Portas, fibras e ligações ainda não existem lá.

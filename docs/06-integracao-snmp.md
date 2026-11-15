@@ -1,5 +1,9 @@
 # Integração com o coletor SNMP
 
+> **Atenção:** análise feita sobre uma versão antiga do serviço. O portal de
+> documentação da plataforma é mais recente e corrige partes deste documento; veja
+> `docs/12-portal-da-plataforma.md`.
+
 Análise do repositório `B-M-O-Be-More/snmp-api-neutra` no commit `f245775`
 (13/05/2026). Refazer se o coletor mudar.
 

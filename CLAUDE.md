@@ -28,6 +28,9 @@ dono na plataforma.
 | O que a API de viabilidade entrega e o que falta | `docs/07-integracao-geo.md` |
 | O que o serviço de notificações entrega e o que falta | `docs/08-integracao-notificacoes.md` |
 | Login, token, papéis e como o editor mantém a sessão | `docs/09-integracao-identidade.md` |
+| **Estado atual dos serviços** (corrige 06 a 09) | `docs/12-portal-da-plataforma.md` |
+| Vocabulário do produto | `GLOSSARY.md` |
+| Decisões difíceis de reverter | `docs/adr/` |
 
 `src/domain/types.ts` é a referência canônica das entidades. Se mudar uma entidade,
 atualize `docs/03-modelo-de-dados.md` no mesmo commit.

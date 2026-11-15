@@ -1,5 +1,9 @@
 # Integração com o serviço de notificações
 
+> **Atenção:** análise feita sobre uma versão antiga do serviço. O portal de
+> documentação da plataforma é mais recente e corrige partes deste documento; veja
+> `docs/12-portal-da-plataforma.md`.
+
 Análise do repositório `B-M-O-Be-More/notification-api-neutra` no commit `b2f43b1`
 (13/05/2026). Refazer se o serviço mudar.
 

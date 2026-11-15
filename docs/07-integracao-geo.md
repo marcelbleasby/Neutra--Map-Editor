@@ -1,5 +1,9 @@
 # Integração com a API de viabilidade (geo)
 
+> **Atenção:** análise feita sobre uma versão antiga do serviço. O portal de
+> documentação da plataforma é mais recente e corrige partes deste documento; veja
+> `docs/12-portal-da-plataforma.md`.
+
 Análise do repositório `B-M-O-Be-More/geo-api-neutra` no commit `eb97922`
 (29/09/2026). Refazer se a API mudar.
 

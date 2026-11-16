@@ -25,6 +25,8 @@ Abra http://localhost:3000, crie um projeto e desenhe a rede.
 - Portas da CTO com situação, marcação de porta compartilhada e assinante.
 - Diagrama de ligações de cada POP, CEO e CTO: fibras em cor, OLT, DIO e splitters,
   ligação por clique e caminho do sinal até a porta PON.
+- Rede neutra: marcar portas compartilhadas, ver o estoque para ofertar e consultar a
+  viabilidade num ponto do mapa (CTOs com porta livre a até 250 m).
 - Topologia: caminho de cada ponto até o POP, o que cai se um elemento falhar (com as
   portas compartilhadas atingidas), orçamento óptico estimado e lista de pendências do desenho.
 - Resumo do projeto (contagem, metragem de cabo, ocupação de portas) e exportação GeoJSON.
@@ -49,3 +51,4 @@ Os dados ficam no `localStorage` do navegador. A integração com a plataforma N
 - [Estado atual dos serviços da plataforma](docs/12-portal-da-plataforma.md)
 - [Pedidos a outros times](docs/13-pedidos-a-outros-times.md)
 - [Referência: Geosite Telecom](docs/14-referencia-geosite.md)
+- [Rede neutra: o foco do editor](docs/15-rede-neutra.md)

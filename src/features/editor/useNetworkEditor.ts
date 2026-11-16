@@ -3,14 +3,75 @@
 import MapboxDraw from "@mapbox/mapbox-gl-draw";
 import turfLength from "@turf/length";
 import mapboxgl from "mapbox-gl";
-import type { Position } from "geojson";
+import type { Feature, Position } from "geojson";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ELEMENTS } from "@/domain/catalog";
 import type { ElementKind, Id, Project } from "@/domain/types";
+import { sharedRings } from "@/features/neutral/neutral";
 import { loadFeatures, saveFeatures } from "@/lib/storage";
 import { DRAW_STYLES } from "./drawStyles";
 import { defaultProperties, type ElementFeature, type ElementProperties } from "./model";
 import { detachNodes, followNode, snapCable, type Projector } from "./topology";
+
+const OVERLAY_SOURCE = "neutra-overlay";
+const SHARED_COLOR = "#7c3aed";
+const FEASIBILITY_COLOR = "#0369a1";
+const byRole = (role: string) => ["==", ["get", "role"], role];
+
+const OVERLAY_LAYERS: mapboxgl.LayerSpecification[] = [
+  {
+    id: "neutra-feasibility-radius",
+    type: "fill",
+    source: OVERLAY_SOURCE,
+    filter: byRole("radius"),
+    paint: { "fill-color": FEASIBILITY_COLOR, "fill-opacity": 0.08 },
+  },
+  {
+    id: "neutra-feasibility-radius-line",
+    type: "line",
+    source: OVERLAY_SOURCE,
+    filter: byRole("radius"),
+    paint: { "line-color": FEASIBILITY_COLOR, "line-width": 1.5, "line-dasharray": [3, 2] },
+  },
+  {
+    id: "neutra-feasibility-link",
+    type: "line",
+    source: OVERLAY_SOURCE,
+    filter: byRole("link"),
+    paint: {
+      "line-color": FEASIBILITY_COLOR,
+      "line-width": 1.5,
+      // CTO sem porta livre: linha apagada.
+      "line-opacity": ["case", [">", ["get", "free"], 0], 0.9, 0.3],
+    },
+  },
+  {
+    id: "neutra-feasibility-point",
+    type: "circle",
+    source: OVERLAY_SOURCE,
+    filter: byRole("point"),
+    paint: {
+      "circle-radius": 6,
+      "circle-color": FEASIBILITY_COLOR,
+      "circle-stroke-color": "#ffffff",
+      "circle-stroke-width": 2,
+    },
+  },
+  {
+    // Anel em volta da CTO com porta compartilhada; cheio quando há porta livre para ofertar.
+    id: "neutra-shared-ring",
+    type: "circle",
+    source: OVERLAY_SOURCE,
+    filter: byRole("shared"),
+    paint: {
+      "circle-radius": 14,
+      "circle-color": "rgba(0,0,0,0)",
+      "circle-stroke-color": SHARED_COLOR,
+      "circle-stroke-width": 2.5,
+      "circle-stroke-opacity": ["case", [">", ["get", "sharedFree"], 0], 1, 0.35],
+    },
+  },
+];
 
 const DRAW_MODE = {
   Point: "draw_point",
@@ -39,6 +100,13 @@ export function useNetworkEditor(project: Project, accessToken: string) {
   const [saveFailed, setSaveFailed] = useState(false);
   const [ready, setReady] = useState(false);
   const commitRef = useRef<() => void>(() => {});
+  // Camada de apoio por cima do Draw: anéis de CTO com porta compartilhada e o
+  // desenho da consulta de viabilidade.
+  const overlayRef = useRef<{ rings: Feature[]; extra: Feature[] }>({ rings: [], extra: [] });
+  const renderOverlayRef = useRef<() => void>(() => {});
+  const [picking, setPicking] = useState(false);
+  const pickingRef = useRef(false);
+  const [pickedPoint, setPickedPoint] = useState<Position | null>(null);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -80,7 +148,15 @@ export function useNetworkEditor(project: Project, accessToken: string) {
         if (feature.geometry.type === "Point") lastPositions.set(feature.id, feature.geometry.coordinates);
       }
       setFeatures(current);
+      overlayRef.current.rings = sharedRings(current);
+      renderOverlayRef.current();
       return current;
+    };
+
+    renderOverlayRef.current = () => {
+      const source = map.getSource(OVERLAY_SOURCE) as mapboxgl.GeoJSONSource | undefined;
+      const { rings, extra } = overlayRef.current;
+      source?.setData({ type: "FeatureCollection", features: [...extra, ...rings] });
     };
 
     const commit = () => {
@@ -109,9 +185,19 @@ export function useNetworkEditor(project: Project, accessToken: string) {
     };
 
     map.on("load", () => {
+      map.addSource(OVERLAY_SOURCE, { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+      for (const layer of OVERLAY_LAYERS) map.addLayer(layer);
       draw.set(loadFeatures(project.id));
       mirror();
       setReady(true);
+    });
+
+    map.on("click", (event) => {
+      if (!pickingRef.current) return;
+      pickingRef.current = false;
+      setPicking(false);
+      map.getCanvas().style.cursor = "";
+      setPickedPoint([event.lngLat.lng, event.lngLat.lat]);
     });
 
     map.on("error", (event) => {
@@ -234,6 +320,34 @@ export function useNetworkEditor(project: Project, accessToken: string) {
     mapRef.current?.easeTo({ center: anchor as [number, number] });
   }, []);
 
+  /** O próximo clique no mapa vira `pickedPoint` (consulta de viabilidade). */
+  const startPicking = useCallback(() => {
+    const draw = drawRef.current;
+    const map = mapRef.current;
+    if (!draw || !map) return;
+    pendingKindRef.current = null;
+    setTool(null);
+    draw.changeMode("simple_select");
+    setSelectedId(null);
+    pickingRef.current = true;
+    setPicking(true);
+    map.getCanvas().style.cursor = "crosshair";
+  }, []);
+
+  const clearPicked = useCallback(() => {
+    pickingRef.current = false;
+    setPicking(false);
+    setPickedPoint(null);
+    const map = mapRef.current;
+    if (map) map.getCanvas().style.cursor = "";
+  }, []);
+
+  /** Desenho de apoio no mapa (raio e linhas da viabilidade); `[]` apaga. */
+  const setOverlay = useCallback((extra: Feature[]) => {
+    overlayRef.current.extra = extra;
+    renderOverlayRef.current();
+  }, []);
+
   const deleteSelected = useCallback(() => {
     // `trash` dispara draw.delete, que cuida de desligar cabos e persistir.
     drawRef.current?.trash();
@@ -247,6 +361,11 @@ export function useNetworkEditor(project: Project, accessToken: string) {
     mapError,
     saveFailed,
     ready,
+    picking,
+    pickedPoint,
+    startPicking,
+    clearPicked,
+    setOverlay,
     addFeatures,
     selectTool,
     selectElement,

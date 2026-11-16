@@ -36,6 +36,7 @@ aqui (ADR 0001). O estado atual dos serviços está em `docs/12`; o que falta ne
 | Decisões difíceis de reverter | `docs/adr/` |
 | O que o editor precisa dos outros serviços | `docs/13-pedidos-a-outros-times.md` |
 | O que o Geosite faz e o que vale trazer | `docs/14-referencia-geosite.md` |
+| **Rede neutra, o foco do editor**: gestão, ofertas, monitoramento | `docs/15-rede-neutra.md` |
 
 `src/domain/types.ts` é a referência canônica das entidades. Se mudar uma entidade,
 atualize `docs/03-modelo-de-dados.md` no mesmo commit.
@@ -59,6 +60,7 @@ src/features/editor/    editor de mapa (Mapbox GL Draw) e seus painéis
   network.ts            grafo físico: rota até o POP, impacto, pendências
 src/domain/opticalGraph.ts  grafo óptico: fibras, conexões, rastreamento até a PON
 src/features/diagram/   diagrama de ligações por nó: modelo, layout e desenho (SVG)
+src/features/neutral/    rede neutra: estoque de portas compartilhadas e viabilidade
 src/features/import/    importação de KML/KMZ: leitura, classificação, revisão, montagem
 src/features/projects/  lista e criação de projetos
 src/lib/storage.ts      única porta de entrada para persistência (hoje localStorage)

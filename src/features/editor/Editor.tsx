@@ -5,13 +5,15 @@ import "@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css";
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Project } from "@/domain/types";
 import type { BuildResult } from "@/features/import/build";
 import { clearPendingImport, peekPendingImport, prepareImport, type ImportDraft } from "@/features/import/draft";
 import { ImportDialog } from "@/features/import/ImportDialog";
 import { buildOpticalModel, type OpticalData } from "@/features/diagram/model";
 import { NodeDiagram } from "@/features/diagram/NodeDiagram";
+import { FeasibilityPanel } from "@/features/neutral/FeasibilityPanel";
+import { checkFeasibility, feasibilityOverlay } from "@/features/neutral/neutral";
 import { getProject, loadOptical, saveOptical } from "@/lib/storage";
 import { computeRoutes } from "./network";
 import { Inspector } from "./Inspector";
@@ -56,12 +58,23 @@ function Workspace({ project }: { project: Project }) {
     mapError,
     saveFailed,
     ready,
+    picking,
+    pickedPoint,
+    startPicking,
+    clearPicked,
+    setOverlay,
     addFeatures,
     selectTool,
     selectElement,
     updateProperties,
     deleteSelected,
   } = useNetworkEditor(project, MAPBOX_TOKEN);
+
+  // Viabilidade: o ponto clicado é guardado; o resultado acompanha as edições da rede.
+  const feasibility = pickedPoint ? checkFeasibility(pickedPoint, features) : null;
+  useEffect(() => {
+    setOverlay(pickedPoint ? feasibilityOverlay(checkFeasibility(pickedPoint, features)) : []);
+  }, [pickedPoint, features, setOverlay]);
 
   // Nível óptico: equipamentos e ligações dentro dos nós.
   const [optical, setOptical] = useState<OpticalData>(() => loadOptical(project.id));
@@ -127,8 +140,18 @@ function Workspace({ project }: { project: Project }) {
         />
         <button
           type="button"
+          aria-pressed={picking}
+          onClick={picking ? clearPicked : startPicking}
+          className={`ml-auto rounded-md border px-2.5 py-1 text-sm ${
+            picking ? "border-sky-700 bg-sky-700 text-white" : "border-slate-300 text-slate-700 hover:bg-slate-100"
+          }`}
+        >
+          {picking ? "Clique no mapa…" : "Viabilidade"}
+        </button>
+        <button
+          type="button"
           onClick={() => fileInput.current?.click()}
-          className="ml-auto rounded-md border border-slate-300 px-2.5 py-1 text-sm text-slate-700 hover:bg-slate-100"
+          className="rounded-md border border-slate-300 px-2.5 py-1 text-sm text-slate-700 hover:bg-slate-100"
         >
           Importar KML/KMZ
         </button>
@@ -168,15 +191,24 @@ function Workspace({ project }: { project: Project }) {
           </div>
         </div>
         <aside className="w-72 shrink-0 overflow-y-auto border-l border-slate-200 bg-white p-3">
-          <Inspector
-            features={features}
-            selected={selected}
-            onChange={updateProperties}
-            onSelect={selectElement}
-            onDelete={deleteSelected}
-            optical={opticalModel}
-            onOpenDiagram={setDiagramNodeId}
-          />
+          {feasibility && !selected ? (
+            <FeasibilityPanel
+              result={feasibility}
+              onSelect={selectElement}
+              onAgain={startPicking}
+              onClose={clearPicked}
+            />
+          ) : (
+            <Inspector
+              features={features}
+              selected={selected}
+              onChange={updateProperties}
+              onSelect={selectElement}
+              onDelete={deleteSelected}
+              optical={opticalModel}
+              onOpenDiagram={setDiagramNodeId}
+            />
+          )}
         </aside>
       </div>
       {diagramNode && (

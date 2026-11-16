@@ -20,6 +20,7 @@ import {
   type ElementFeature,
   type ElementProperties,
 } from "./model";
+import { networkInventory, shareFreePorts, unshareFreePorts } from "@/features/neutral/neutral";
 import { analyzeNetwork, estimateLoss, impactOf, type Issue, type NetworkAnalysis } from "./network";
 
 const FIELD = "w-full rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-900";
@@ -125,6 +126,7 @@ function Summary({
           </dl>
         </div>
       )}
+      {totalPorts > 0 && <NeutralSummary features={features} />}
       <section className={SECTION}>
         <h3 className={HEADING}>
           Pendências ({analysis.issues.length}
@@ -141,6 +143,33 @@ function Summary({
         )}
       </section>
     </div>
+  );
+}
+
+/** O que o projeto tem de portas compartilhadas: é o estoque para ofertar. */
+function NeutralSummary({ features }: { features: ElementFeature[] }) {
+  const { totals, ctosWithOffer } = networkInventory(features);
+  const shared = totals.sharedFree + totals.sharedBusy;
+  return (
+    <section className={SECTION}>
+      <h3 className={HEADING}>Rede neutra</h3>
+      {shared === 0 ? (
+        <p className="text-sm text-slate-500">
+          Nenhuma porta compartilhada. Marque portas nas CTOs para ter o que ofertar a outras Empresas.
+        </p>
+      ) : (
+        <dl className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-1 text-sm">
+          <dt className="text-slate-600">Livres para ofertar</dt>
+          <dd className="text-right font-medium tabular-nums text-slate-900">{totals.sharedFree}</dd>
+          <dt className="text-slate-600">CTOs com oferta</dt>
+          <dd className="text-right font-medium tabular-nums text-slate-900">{ctosWithOffer}</dd>
+          <dt className="text-slate-600">Em uso por outras Empresas</dt>
+          <dd className="text-right font-medium tabular-nums text-slate-900">{totals.sharedBusy}</dd>
+          <dt className="text-slate-600">Portas próprias livres</dt>
+          <dd className="text-right font-medium tabular-nums text-slate-900">{totals.ownFree}</dd>
+        </dl>
+      )}
+    </section>
   );
 }
 
@@ -197,6 +226,24 @@ function PortEditor({
             {port.index}
           </button>
         ))}
+      </div>
+      <div className="mt-2 flex gap-3 text-xs">
+        <button
+          type="button"
+          onClick={() => onChange(shareFreePorts(ports))}
+          disabled={!ports.some((port) => port.status === "free" && !port.shared)}
+          className="font-medium text-violet-700 hover:underline disabled:text-slate-400 disabled:no-underline"
+        >
+          Compartilhar as livres
+        </button>
+        <button
+          type="button"
+          onClick={() => onChange(unshareFreePorts(ports))}
+          disabled={!ports.some((port) => port.status === "free" && port.shared)}
+          className="font-medium text-slate-700 hover:underline disabled:text-slate-400 disabled:no-underline"
+        >
+          Tirar o compartilhamento das livres
+        </button>
       </div>
       {open && (
         <div className="mt-3 flex flex-col gap-2 rounded-md border border-slate-200 bg-slate-50 p-2">

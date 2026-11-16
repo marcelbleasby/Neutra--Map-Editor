@@ -10,6 +10,7 @@ import {
   shareFreePorts,
   unshareFreePorts,
 } from "./neutral";
+import { coverageFromCtos, draftOffer, inventoryCsv } from "./offer";
 
 // No equador, 0,001° de longitude ≈ 111,2 m.
 const cto = (id: string, lng: number, ports: CtoPort[]): ElementFeature => ({
@@ -97,5 +98,40 @@ describe("viabilidade", () => {
     const overlay = feasibilityOverlay(checkFeasibility([0, 0], network));
     expect(overlay.map((f) => f.properties?.role)).toEqual(["radius", "link", "link", "link", "point"]);
     expect(sharedRings(network).map((f) => f.properties?.sharedFree)).toEqual([2]);
+  });
+});
+
+describe("da rede para a oferta", () => {
+  const network = [
+    cto("a", 0, ports("LLll")), // 2 compartilhadas livres
+    cto("b", 0.001, ports("UUlu")), // 1 livre, 1 em uso
+    cto("c", 0.02, ports("llll")), // 4 livres, a ~2,2 km
+    cto("d", 0.0005, ports("LLUU")), // nenhuma compartilhada
+    area, // cobre a, b e d
+  ];
+
+  it("soma as portas compartilhadas livres do projeto ou de uma área", () => {
+    expect(draftOffer(network)).toMatchObject({ portCount: 7, portsInUse: 1 });
+    expect(draftOffer(network).ctos.map((c) => c.id)).toEqual(["a", "b", "c"]);
+    const inside = draftOffer(network, "area");
+    expect(inside.ctos.map((c) => c.id)).toEqual(["a", "b"]);
+    expect(inside.portCount).toBe(3);
+  });
+
+  it("une os círculos de CTOs vizinhas e separa as afastadas", () => {
+    const areas = coverageFromCtos([[0, 0], [0.001, 0], [0.02, 0]]);
+    expect(areas).toHaveLength(2);
+    // A área unida alcança ~250 m a oeste da primeira CTO e a leste da segunda.
+    const xs = areas[0].coordinates[0].map(([x]) => x);
+    expect(Math.min(...xs)).toBeCloseTo(-0.00225, 4);
+    expect(Math.max(...xs)).toBeCloseTo(0.00325, 4);
+    expect(coverageFromCtos([])).toEqual([]);
+    expect(coverageFromCtos([[0, 0]])).toHaveLength(1);
+  });
+
+  it("exporta a ocupação em CSV que o Excel abre", () => {
+    const csv = inventoryCsv(networkInventory([cto('CTO "Centro"; 01', 0.5, ports("LUlu"))]));
+    expect(csv.startsWith("﻿CTO;Latitude;Longitude;Portas;")).toBe(true);
+    expect(csv.split("\r\n")[1]).toBe('"CTO ""Centro""; 01";0.000000;0.500000;4;1;1;1;1;0');
   });
 });

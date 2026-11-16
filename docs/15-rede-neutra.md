@@ -30,7 +30,8 @@ quem foi atingido.
 | Cobertura no mesmo ponto, para as duas perguntas não se confundirem | Mesmo painel |
 | Impacto de falha contando as portas compartilhadas atingidas | Painel de qualquer elemento |
 
-As regras estão em `src/features/neutral/neutral.ts`, puras e testadas.
+As regras estão em `src/features/neutral/` (`neutral.ts` e `offer.ts`), puras e
+testadas.
 
 A consulta de viabilidade responde a duas perguntas de uma vez:
 
@@ -45,8 +46,9 @@ Hoje a oferta de CTO no marketplace tem `portCount` digitado e uma cobertura env
 
 | Passo | Situação |
 | --- | --- |
-| Selecionar CTOs e ver quantas portas compartilhadas livres somam | Os dados existem (`networkInventory`); falta a seleção em área |
-| Gerar a área de cobertura da oferta a partir dessas CTOs (raio de 250 m em volta de cada uma) | A fazer; é a "mancha calculada" do Geosite |
+| Somar as portas compartilhadas livres do projeto ou de dentro de uma área | Feito: botão "Portas para ofertar" |
+| Gerar a área de cobertura a partir dessas CTOs (união dos raios de 250 m; CTOs afastadas dão áreas separadas) | Feito, no mesmo painel |
+| Baixar a ocupação por CTO em planilha (CSV) | Feito, no mesmo painel |
 | Enviar quantidade e área para uma oferta do marketplace | Depende do marketplace e do pedido G4 (`docs/13`) |
 | Quando o pedido é aceito, indicar quais portas o atendem | Depende do pedido M1 |
 | Impedir que se oferte mais portas do que há livres | Depende dos dois anteriores |
@@ -78,5 +80,10 @@ compartilhada pode virar oferta, pedido e cobrança na mesma plataforma.
 
 ## Perguntas em aberto
 
-Ver a rodada de perguntas na conversa que originou este documento; as respostas
-entram no glossário e em ADRs.
+| Pergunta | Por que importa |
+| --- | --- |
+| A oferta é criada a partir do editor, ou o editor só fornece quantidade e área para quem cria a oferta no marketplace? | Define se o editor chama o marketplace ou só exporta |
+| Portas já ofertadas ficam reservadas no editor, para não serem usadas pela própria Empresa? | Sem isso dá para vender a mesma porta duas vezes |
+| Compartilha-se só porta de CTO, ou também splitter inteiro e fibra apagada? | O Geosite aluga splitter; o marketplace tem oferta de fibra apagada |
+| O que a Empresa que compra precisa ver da porta que usa (situação, potência, falhas)? | Decidimos que ela não entra no editor; o monitoramento pode exigir uma visão para ela em outro lugar |
+| O monitoramento sobe de prioridade em relação ao que ficou para "outra fase"? | O serviço de SNMP está indisponível e sem dados de PON |

@@ -12,12 +12,14 @@ import { clearPendingImport, peekPendingImport, prepareImport, type ImportDraft 
 import { ImportDialog } from "@/features/import/ImportDialog";
 import { buildOpticalModel, type OpticalData } from "@/features/diagram/model";
 import { NodeDiagram } from "@/features/diagram/NodeDiagram";
+import type { Polygon } from "geojson";
 import { FeasibilityPanel } from "@/features/neutral/FeasibilityPanel";
+import { OfferPanel } from "@/features/neutral/OfferPanel";
 import { checkFeasibility, feasibilityOverlay } from "@/features/neutral/neutral";
 import { getProject, loadOptical, saveOptical } from "@/lib/storage";
 import { computeRoutes } from "./network";
 import { Inspector } from "./Inspector";
-import type { ElementFeature } from "./model";
+import { defaultProperties, type ElementFeature } from "./model";
 import { Palette } from "./Palette";
 import { useNetworkEditor } from "./useNetworkEditor";
 
@@ -66,6 +68,7 @@ function Workspace({ project }: { project: Project }) {
     addFeatures,
     selectTool,
     selectElement,
+    clearSelection,
     updateProperties,
     deleteSelected,
   } = useNetworkEditor(project, MAPBOX_TOKEN);
@@ -75,6 +78,27 @@ function Workspace({ project }: { project: Project }) {
   useEffect(() => {
     setOverlay(pickedPoint ? feasibilityOverlay(checkFeasibility(pickedPoint, features)) : []);
   }, [pickedPoint, features, setOverlay]);
+
+  const [offerOpen, setOfferOpen] = useState(false);
+
+  /** Áreas geradas a partir das CTOs com porta para ofertar. */
+  function createCoverageAreas(areas: Polygon[]) {
+    const created: ElementFeature[] = [];
+    for (const geometry of areas) {
+      created.push({
+        type: "Feature",
+        id: crypto.randomUUID(),
+        geometry,
+        properties: { ...defaultProperties("coverage_area", [...features, ...created]), status: "active" },
+      });
+    }
+    addFeatures(created);
+    setNotice(
+      created.length === 1
+        ? `Área de cobertura criada: ${created[0].properties.name}.`
+        : `${created.length} áreas de cobertura criadas.`,
+    );
+  }
 
   // Nível óptico: equipamentos e ligações dentro dos nós.
   const [optical, setOptical] = useState<OpticalData>(() => loadOptical(project.id));
@@ -150,6 +174,19 @@ function Workspace({ project }: { project: Project }) {
         </button>
         <button
           type="button"
+          aria-pressed={offerOpen}
+          onClick={() => {
+            if (!offerOpen) clearSelection();
+            setOfferOpen(!offerOpen);
+          }}
+          className={`rounded-md border px-2.5 py-1 text-sm ${
+            offerOpen ? "border-violet-700 bg-violet-700 text-white" : "border-slate-300 text-slate-700 hover:bg-slate-100"
+          }`}
+        >
+          Portas para ofertar
+        </button>
+        <button
+          type="button"
           onClick={() => fileInput.current?.click()}
           className="rounded-md border border-slate-300 px-2.5 py-1 text-sm text-slate-700 hover:bg-slate-100"
         >
@@ -191,7 +228,16 @@ function Workspace({ project }: { project: Project }) {
           </div>
         </div>
         <aside className="w-72 shrink-0 overflow-y-auto border-l border-slate-200 bg-white p-3">
-          {feasibility && !selected ? (
+          {/* Um elemento selecionado sempre mostra suas propriedades; sem seleção, o painel aberto. */}
+          {!selected && offerOpen ? (
+            <OfferPanel
+              features={features}
+              projectName={project.name}
+              onSelect={selectElement}
+              onCreateAreas={createCoverageAreas}
+              onClose={() => setOfferOpen(false)}
+            />
+          ) : !selected && feasibility ? (
             <FeasibilityPanel
               result={feasibility}
               onSelect={selectElement}

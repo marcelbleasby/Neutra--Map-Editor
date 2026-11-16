@@ -13,6 +13,8 @@ outros times, em [`docs/13-pedidos-a-outros-times.md`](13-pedidos-a-outros-times
 - Portas de CTO com situação, compartilhamento e assinante.
 - Rede neutra: estoque de portas para ofertar, CTOs com porta compartilhada no mapa e
   consulta de viabilidade por ponto (`docs/15-rede-neutra.md`).
+- Portas para ofertar: soma por projeto ou por área, área de cobertura calculada a
+  partir das CTOs e ocupação em planilha.
 - Glossário e decisões registradas.
 
 Tudo isso roda no navegador, com os dados no `localStorage`.
@@ -43,10 +45,9 @@ Não depende de nenhum pedido a outro time.
 Dentro do editor, sem depender de outros times. O foco é rede neutra
 (`docs/15-rede-neutra.md`); os itens de topologia entram quando servem a ela.
 
-- Selecionar CTOs em área e somar as portas compartilhadas livres.
-- Área de cobertura calculada a partir das CTOs com porta livre.
 - Viabilidade por endereço (hoje é por clique no mapa) e registro das consultas.
-- Relatório de ocupação: portas próprias e compartilhadas por CTO, em planilha.
+- Reservar no editor as portas que já estão numa oferta.
+- Impacto de falha destacado no mapa, com as portas compartilhadas atingidas.
 
 - Ligar várias fibras de uma vez e destacar no mapa o caminho rastreado.
 - Sentido inverso: da porta PON, listar CTOs e assinantes.

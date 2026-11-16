@@ -320,6 +320,16 @@ export function useNetworkEditor(project: Project, accessToken: string) {
     mapRef.current?.easeTo({ center: anchor as [number, number] });
   }, []);
 
+  /** Tira a seleção, para um painel do projeto poder ocupar o lugar das propriedades. */
+  const clearSelection = useCallback(() => {
+    const draw = drawRef.current;
+    if (!draw) return;
+    pendingKindRef.current = null;
+    setTool(null);
+    draw.changeMode("simple_select");
+    setSelectedId(null);
+  }, []);
+
   /** O próximo clique no mapa vira `pickedPoint` (consulta de viabilidade). */
   const startPicking = useCallback(() => {
     const draw = drawRef.current;
@@ -369,6 +379,7 @@ export function useNetworkEditor(project: Project, accessToken: string) {
     addFeatures,
     selectTool,
     selectElement,
+    clearSelection,
     updateProperties,
     deleteSelected,
   };

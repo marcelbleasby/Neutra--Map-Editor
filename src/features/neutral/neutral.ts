@@ -87,7 +87,7 @@ export function distanceMeters(a: Position, b: Position): number {
   return 2 * EARTH_RADIUS_METERS * Math.asin(Math.sqrt(h));
 }
 
-function insideRing(point: Position, ring: Position[]): boolean {
+export function insideRing(point: Position, ring: Position[]): boolean {
   let inside = false;
   for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
     const [xi, yi] = ring[i];
@@ -139,7 +139,7 @@ export function checkFeasibility(
 }
 
 /** Círculo em metros como polígono, para desenhar o raio no mapa. */
-function circleRing(center: Position, radiusMeters: number, steps = 64): Position[] {
+export function circleRing(center: Position, radiusMeters: number, steps = 64): Position[] {
   const latRadius = (radiusMeters / EARTH_RADIUS_METERS) * (180 / Math.PI);
   const lngRadius = latRadius / Math.cos(toRadians(center[1]));
   return Array.from({ length: steps + 1 }, (_, i) => {

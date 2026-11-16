@@ -1,11 +1,35 @@
 # Referência: o que o Geosite Telecom faz
 
-Análise da página pública "Notas de versão do Geosite Telecom", salva em 16/11/2026,
-cobrindo as versões 2.83 (junho de 2025) a 2.106 (novembro de 2026).
+Análise de duas páginas públicas do site, salvas em 16/11/2026:
 
-**Limite desta análise:** notas de versão dizem o que mudou, não descrevem o produto
-inteiro. Funções antigas e estáveis só aparecem quando são citadas de passagem. A
-página "Funcionalidades" do site daria o quadro completo e não foi analisada.
+- **Notas de versão**, das versões 2.83 (junho de 2025) a 2.106 (novembro de 2026);
+- **Funcionalidades**, a página comercial do produto.
+
+**Limite desta análise:** as notas dizem o que mudou, e a página comercial diz o que
+se promete; nenhuma das duas mostra as telas. O que está aqui é o que o Geosite
+declara fazer, não uma avaliação de uso.
+
+## Como o Geosite se apresenta
+
+A página comercial vende seis frentes, nesta ordem:
+
+| Frente | O que prometem | Aqui |
+| --- | --- | --- |
+| Inventário | Caixas, splitters, cabos e clientes num mapa único, com importação de KMZ, KML e SHP | É o núcleo do editor |
+| Rotas | Google Maps e Street View; rotas mais curtas para as equipes | Fora do escopo |
+| Monitoramento | Alertas de falha, degradação de sinal e rompimento; "predição do local exato de rompimento"; integra com Zabbix e OLTCloud | Outra fase (SNMP) |
+| Campo | Aplicativo Android e iOS com uso sem conexão, fotos e comentários | Outra fase |
+| Rede neutra | "Gerencie tenants, alugue portas e splitters"; "documente, separe e monitore ativos de múltiplos operadores" | Compartilhamento |
+| Demais | Viabilidade, análise OTDR, indicadores, integrações com ERPs (Visium, IXC, MK Solutions, Hubsoft, Voalle), API aberta | Parte no editor, parte na plataforma |
+
+Três coisas dessa página não aparecem nas notas de versão:
+
+- **A viabilidade mostra "caminhos possíveis de drop"** e a capacidade dos splitters,
+  no mapa e no celular. Ou seja, eles traçam o drop até o endereço, não medem só a
+  distância.
+- **Rastreio de técnicos em tempo real**, com escolha do técnico mais próximo de um
+  rompimento.
+- **Aluga-se também o splitter inteiro**, não só portas avulsas.
 
 ## Como o Geosite se organiza
 
@@ -108,6 +132,7 @@ Ordenado por quanto agrega em relação ao esforço, considerando o que o editor
 | 4 | **Ligar várias fibras de uma vez** e replicar ao longo da rota | Sem isso, documentar um cabo de 48 fibras são 48 pares de cliques | Médio |
 | 5 | **Fibras disponíveis por cabo** | Mostra capacidade ociosa; os dados já existem | Baixo |
 | 6 | **Área de cobertura calculada** a partir das CTOs com porta livre | Substitui o desenho à mão e fica coerente com a Viabilidade (250 m) | Médio |
+| 6b | **Caminho do drop na viabilidade**: mostrar o traçado até o endereço, não só a distância | É como o Geosite apresenta a viabilidade. Decidimos linha reta por não haver rota viária na plataforma | Alto: exige malha de ruas ou de postes |
 | 7 | **Registro das consultas de viabilidade** | Histórico de onde se negou atendimento orienta a expansão | Baixo, mas depende de onde gravar |
 | 8 | **Continuar cadastrando** o mesmo tipo e **lista ao clicar em ponto sobreposto** | Produtividade no uso mais repetitivo do mapa | Baixo |
 | 9 | **Pesquisa por nome ou código** | Indispensável numa rede de centenas de CTOs | Baixo |
@@ -118,6 +143,11 @@ Ordenado por quanto agrega em relação ao esforço, considerando o que o editor
 Os itens 1, 4, 5 e 10 já estavam na lista do que falta em `docs/10-topologia.md`; a
 referência confirma a prioridade. Os itens 2, 3, 6, 7 e 8 são novos.
 
+Para a fase de monitoramento, a referência aponta o alvo: **dizer onde está o
+rompimento**. O editor já tem as duas peças que isso exige — o impacto de falha, que
+liga um conjunto de portas atingidas ao elemento comum rio acima, e o comprimento de
+cada cabo no caminho. Falta o dado de quais ONUs caíram, que depende do SNMP.
+
 ## Onde o Geosite faz diferente do que decidimos
 
 - **Rede neutra por cota, não por porta.** O Geosite dá a cada tenant um limite de
@@ -126,6 +156,13 @@ referência confirma a prioridade. Os itens 2, 3, 6, 7 e 8 são novos.
   operar quando o que se vende é capacidade numa região; o nosso é mais preciso
   quando importa qual porta está com quem. Vale saber que a referência de mercado foi
   pelo outro caminho.
+- **Aluga-se o splitter, não só a porta.** Aqui a unidade compartilhada é a porta da
+  CTO. Compartilhar um splitter inteiro equivale a marcar todas as suas portas, mas
+  não há como dizer isso de uma vez nem como compartilhar um splitter de 1º nível.
+- **O tenant vê e cadastra os próprios clientes no mapa.** Aqui quem usa a porta não
+  entra no editor (ADR 0005). É uma diferença de produto, não de detalhe: o Geosite é
+  uma ferramenta que a dona da rede abre para os tenants; o editor é uma ferramenta
+  só da dona, e a relação entre as empresas fica no marketplace.
 - **Rede projetada como modo separado.** Eles isolam o que é projeto do que existe e
   convertem depois. Aqui é uma situação em cada elemento, o que é mais simples, mas
   não impede que alguém ligue um elemento ativo a um planejado sem perceber.

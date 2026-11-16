@@ -1,10 +1,67 @@
 @import "tailwindcss";
 
+/*
+ * Tokens de design (docs/16-design.md). Persona: técnico em redes FTTH, no
+ * escritório e em campo. Fundo claro para leitura ao sol; amarelo de etiqueta só
+ * para o que está selecionado ou ativo.
+ */
+@theme {
+  --color-ink: #1b232c;
+  --color-ink-soft: #3d4853;
+  --color-ink-muted: #56626d;
+  --color-concrete: #e6ebe8;
+  --color-plate: #ffffff;
+  --color-line: #c2ccc8;
+  --color-line-soft: #dde3e0;
+  --color-tag: #ffc700;
+  --color-tag-soft: #fff4c2;
+  --color-signal: #0b57b7;
+  --color-shared: #6d28d9;
+  --color-ok: #166534;
+  --color-warn: #8a4b06;
+  --color-warn-soft: #fff1d6;
+  --color-danger: #b42318;
+  --color-danger-soft: #fde8e6;
+}
+
 @theme inline {
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-barlow), system-ui, sans-serif;
+  --font-tag: var(--font-barlow-condensed), var(--font-barlow), sans-serif;
 }
 
 body {
-  font-family: var(--font-sans), system-ui, sans-serif;
+  font-family: var(--font-sans);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Foco visível em fundo claro e sobre o mapa: contorno de tinta grosso. */
+:where(a, button, input, select, textarea, [role="button"], [tabindex]):focus-visible {
+  outline: 3px solid var(--color-ink);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Porta com defeito: hachura, para não depender só da cor. */
+.port-defective {
+  background-image: repeating-linear-gradient(
+    135deg,
+    var(--color-danger-soft) 0 4px,
+    #f3b8b1 4px 8px
+  );
+}
+
+/* Controles do Mapbox maiores em tela de toque. */
+@media (pointer: coarse) {
+  .mapboxgl-ctrl-group button {
+    width: 44px;
+    height: 44px;
+  }
 }

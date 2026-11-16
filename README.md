@@ -56,3 +56,4 @@ Os dados ficam no `localStorage` do navegador. A integração com a plataforma N
 - [Pedidos a outros times](docs/13-pedidos-a-outros-times.md)
 - [Referência: Geosite Telecom](docs/14-referencia-geosite.md)
 - [Rede neutra: o foco do editor](docs/15-rede-neutra.md)
+- [Design da interface](docs/16-design.md)

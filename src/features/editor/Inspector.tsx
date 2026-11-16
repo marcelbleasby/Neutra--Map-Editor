@@ -12,6 +12,8 @@ import {
 import type { OpticalModel } from "@/domain/opticalGraph";
 import type { Id, LifecycleStatus, PortStatus } from "@/domain/types";
 import { describeTrace, nodeHasDiagram, traceCto } from "@/features/diagram/model";
+import { Share2, Workflow } from "lucide-react";
+import { Button, FIELD, IdTag, LABEL } from "@/components/ui";
 import {
   CTO_PORT_OPTIONS,
   makeCtoPorts,
@@ -23,12 +25,50 @@ import {
 import { networkInventory, shareFreePorts, unshareFreePorts } from "@/features/neutral/neutral";
 import { analyzeNetwork, estimateLoss, impactOf, type Issue, type NetworkAnalysis } from "./network";
 
-const FIELD = "w-full rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-900";
-const LABEL = "mb-1 block text-xs font-medium text-slate-600";
-const SECTION = "border-t border-slate-200 pt-3";
-/** Marca das portas compartilhadas na grade da CTO. */
-const SHARED_COLOR = "#7c3aed";
-const HEADING = "mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500";
+const SECTION = "border-t border-line-soft pt-4";
+const HEADING = "mb-2 text-sm font-semibold text-ink";
+
+/**
+ * Aparência de uma porta na grade da CTO. A situação nunca é só cor: em uso é
+ * cheia, reservada tem contorno tracejado, com defeito é hachurada, livre é vazada.
+ * Compartilhada ganha a barra violeta embaixo.
+ */
+function portLook(port: CtoPort): { className: string; style?: React.CSSProperties } {
+  const shared = port.shared ? "shadow-[inset_0_-4px_0_0_var(--color-shared)]" : "";
+  switch (port.status) {
+    case "in_use":
+      return { className: `border-2 border-ok ${shared}`, style: { background: PORT_STATUS_COLORS.in_use } };
+    case "reserved":
+      return { className: `border-2 border-dashed border-warn bg-[#fde68a] ${shared}` };
+    case "defective":
+      return { className: `port-defective border-2 border-danger ${shared}` };
+    default:
+      return { className: `border-2 border-line bg-plate ${shared}` };
+  }
+}
+
+function PortLegend() {
+  const items: [string, CtoPort][] = [
+    ["Livre", { index: 0, status: "free" }],
+    ["Em uso", { index: 0, status: "in_use" }],
+    ["Reservada", { index: 0, status: "reserved" }],
+    ["Defeito", { index: 0, status: "defective" }],
+    ["Compartilhada", { index: 0, status: "free", shared: true }],
+  ];
+  return (
+    <ul aria-label="Legenda das portas" className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-ink-soft">
+      {items.map(([label, port]) => {
+        const look = portLook(port);
+        return (
+          <li key={label} className="flex items-center gap-1.5">
+            <span aria-hidden className={`size-3.5 rounded-sm ${look.className}`} style={look.style} />
+            {label}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
 
 function formatMeters(meters: number) {
   return meters >= 1000 ? `${(meters / 1000).toFixed(2)} km` : `${meters} m`;
@@ -46,11 +86,14 @@ function IssueList({
   return (
     <ul className="flex flex-col gap-1">
       {issues.map((issue, index) => {
-        const tone = issue.severity === "error" ? "border-red-200 bg-red-50 text-red-800" : "border-amber-200 bg-amber-50 text-amber-900";
+        const error = issue.severity === "error";
+        const tone = error ? "border-danger/40 bg-danger-soft text-danger" : "border-warn/40 bg-warn-soft text-warn";
+        // Gravidade também em texto, não só na cor.
         const text = (
           <>
-            {nameOf && <span className="font-semibold">{nameOf(issue.elementId)}: </span>}
-            {issue.message}
+            <span className="font-semibold">{error ? "Erro" : "Aviso"}</span>
+            {nameOf && <span className="font-tag font-semibold"> · {nameOf(issue.elementId)}</span>}
+            <span className="block text-ink">{issue.message}</span>
           </>
         );
         return (
@@ -59,12 +102,12 @@ function IssueList({
               <button
                 type="button"
                 onClick={() => onSelect(issue.elementId)}
-                className={`w-full rounded-md border px-2 py-1 text-left text-xs ${tone} hover:brightness-95`}
+                className={`min-h-9 w-full cursor-pointer rounded-md border px-2.5 py-1.5 text-left text-sm ${tone} hover:brightness-95 pointer-coarse:min-h-11`}
               >
                 {text}
               </button>
             ) : (
-              <p className={`rounded-md border px-2 py-1 text-xs ${tone}`}>{text}</p>
+              <p className={`rounded-md border px-2.5 py-1.5 text-sm ${tone}`}>{text}</p>
             )}
           </li>
         );
@@ -86,7 +129,7 @@ function Summary({
   const kinds = Object.entries(summary.countByKind);
   const totalPorts = Object.values(summary.ports).reduce((a, b) => a + b, 0);
   if (kinds.length === 0) {
-    return <p className="text-sm text-slate-500">Projeto vazio. Comece posicionando um POP.</p>;
+    return <p className="text-sm text-ink-muted">Projeto vazio. Comece posicionando um POP.</p>;
   }
   const errors = analysis.issues.filter((issue) => issue.severity === "error").length;
   return (
@@ -94,34 +137,38 @@ function Summary({
       <dl className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-1 text-sm">
         {kinds.map(([kind, count]) => (
           <div key={kind} className="contents">
-            <dt className="text-slate-600">{ELEMENTS[kind as keyof typeof ELEMENTS].label}</dt>
-            <dd className="text-right font-medium tabular-nums text-slate-900">{count}</dd>
+            <dt className="text-ink-soft">{ELEMENTS[kind as keyof typeof ELEMENTS].label}</dt>
+            <dd className="text-right font-medium tabular-nums text-ink">{count}</dd>
           </div>
         ))}
         <div className="contents">
-          <dt className="text-slate-600">Cabo lançado</dt>
-          <dd className="text-right font-medium tabular-nums text-slate-900">{formatMeters(summary.cableMeters)}</dd>
+          <dt className="text-ink-soft">Cabo lançado</dt>
+          <dd className="text-right font-medium tabular-nums text-ink">{formatMeters(summary.cableMeters)}</dd>
         </div>
       </dl>
       {totalPorts > 0 && (
         <div>
-          <h3 className={LABEL}>Portas de CTO ({totalPorts})</h3>
+          <h3 className={HEADING}>Portas de CTO ({totalPorts})</h3>
           <dl className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-1 text-sm">
             {(Object.keys(summary.ports) as PortStatus[]).map((status) => (
               <div key={status} className="contents">
-                <dt className="flex items-center gap-2 text-slate-600">
-                  <span className="size-2.5 rounded-sm" style={{ background: PORT_STATUS_COLORS[status] }} />
+                <dt className="flex items-center gap-2 text-ink-soft">
+                  <span
+                    aria-hidden
+                    className={`size-3.5 rounded-sm ${portLook({ index: 0, status }).className}`}
+                    style={portLook({ index: 0, status }).style}
+                  />
                   {PORT_STATUS_LABELS[status]}
                 </dt>
-                <dd className="text-right font-medium tabular-nums text-slate-900">{summary.ports[status]}</dd>
+                <dd className="text-right font-medium tabular-nums text-ink">{summary.ports[status]}</dd>
               </div>
             ))}
             <div className="contents">
-              <dt className="flex items-center gap-2 text-slate-600">
-                <span className="h-1 w-2.5 rounded-sm" style={{ background: SHARED_COLOR }} />
+              <dt className="flex items-center gap-2 text-ink-soft">
+                <span aria-hidden className={`size-3.5 rounded-sm ${portLook({ index: 0, status: "free", shared: true }).className}`} />
                 Compartilhadas
               </dt>
-              <dd className="text-right font-medium tabular-nums text-slate-900">{summary.sharedPorts}</dd>
+              <dd className="text-right font-medium tabular-nums text-ink">{summary.sharedPorts}</dd>
             </div>
           </dl>
         </div>
@@ -133,7 +180,7 @@ function Summary({
           {errors > 0 ? `, ${errors} ${errors === 1 ? "erro" : "erros"}` : ""})
         </h3>
         {analysis.issues.length === 0 ? (
-          <p className="text-sm text-slate-500">Nenhuma. A topologia está consistente.</p>
+          <p className="text-sm text-ink-muted">Nenhuma. A topologia está consistente.</p>
         ) : (
           <IssueList
             issues={analysis.issues}
@@ -154,19 +201,19 @@ function NeutralSummary({ features }: { features: ElementFeature[] }) {
     <section className={SECTION}>
       <h3 className={HEADING}>Rede neutra</h3>
       {shared === 0 ? (
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-ink-muted">
           Nenhuma porta compartilhada. Marque portas nas CTOs para ter o que ofertar a outras Empresas.
         </p>
       ) : (
         <dl className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-1 text-sm">
-          <dt className="text-slate-600">Livres para ofertar</dt>
-          <dd className="text-right font-medium tabular-nums text-slate-900">{totals.sharedFree}</dd>
-          <dt className="text-slate-600">CTOs com oferta</dt>
-          <dd className="text-right font-medium tabular-nums text-slate-900">{ctosWithOffer}</dd>
-          <dt className="text-slate-600">Em uso por outras Empresas</dt>
-          <dd className="text-right font-medium tabular-nums text-slate-900">{totals.sharedBusy}</dd>
-          <dt className="text-slate-600">Portas próprias livres</dt>
-          <dd className="text-right font-medium tabular-nums text-slate-900">{totals.ownFree}</dd>
+          <dt className="text-ink-soft">Livres para ofertar</dt>
+          <dd className="text-right font-medium tabular-nums text-ink">{totals.sharedFree}</dd>
+          <dt className="text-ink-soft">CTOs com oferta</dt>
+          <dd className="text-right font-medium tabular-nums text-ink">{ctosWithOffer}</dd>
+          <dt className="text-ink-soft">Em uso por outras Empresas</dt>
+          <dd className="text-right font-medium tabular-nums text-ink">{totals.sharedBusy}</dd>
+          <dt className="text-ink-soft">Portas próprias livres</dt>
+          <dd className="text-right font-medium tabular-nums text-ink">{totals.ownFree}</dd>
         </dl>
       )}
     </section>
@@ -193,7 +240,7 @@ function PortEditor({
         <span className={LABEL}>Portas</span>
         <select
           aria-label="Quantidade de portas"
-          className="rounded border border-slate-300 bg-white px-1 py-0.5 text-xs text-slate-900"
+          className="rounded border border-line bg-plate px-1 py-0.5 text-xs text-ink"
           value={ports.length}
           onChange={(event) => {
             setOpenIndex(null);
@@ -207,7 +254,7 @@ function PortEditor({
           ))}
         </select>
       </div>
-      <div className="grid grid-cols-8 gap-1">
+      <div className="grid grid-cols-8 gap-1.5">
         {ports.map((port) => (
           <button
             key={port.index}
@@ -215,39 +262,32 @@ function PortEditor({
             aria-pressed={openIndex === port.index}
             aria-label={`Porta ${port.index}: ${PORT_STATUS_LABELS[port.status]}${port.shared ? ", compartilhada" : ""}`}
             onClick={() => setOpenIndex(openIndex === port.index ? null : port.index)}
-            className={`aspect-square rounded text-[11px] font-medium text-slate-900 ${
-              openIndex === port.index ? "ring-2 ring-slate-900 ring-offset-1" : ""
+            className={`aspect-square min-h-8 cursor-pointer rounded-md font-tag text-base font-semibold text-ink ${portLook(port).className} ${
+              openIndex === port.index ? "outline-3 outline-offset-2 outline-ink" : ""
             }`}
-            style={{
-              background: PORT_STATUS_COLORS[port.status],
-              boxShadow: port.shared ? `inset 0 -3px 0 ${SHARED_COLOR}` : undefined,
-            }}
+            style={portLook(port).style}
           >
             {port.index}
           </button>
         ))}
       </div>
-      <div className="mt-2 flex gap-3 text-xs">
-        <button
-          type="button"
-          onClick={() => onChange(shareFreePorts(ports))}
-          disabled={!ports.some((port) => port.status === "free" && !port.shared)}
-          className="font-medium text-violet-700 hover:underline disabled:text-slate-400 disabled:no-underline"
-        >
+      <PortLegend />
+      <div className="mt-3 flex flex-wrap gap-2">
+        <Button onClick={() => onChange(shareFreePorts(ports))} disabled={!ports.some((port) => port.status === "free" && !port.shared)}>
+          <Share2 aria-hidden className="size-4 text-shared" />
           Compartilhar as livres
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
+          variant="quiet"
           onClick={() => onChange(unshareFreePorts(ports))}
           disabled={!ports.some((port) => port.status === "free" && port.shared)}
-          className="font-medium text-slate-700 hover:underline disabled:text-slate-400 disabled:no-underline"
         >
           Tirar o compartilhamento das livres
-        </button>
+        </Button>
       </div>
       {open && (
-        <div className="mt-3 flex flex-col gap-2 rounded-md border border-slate-200 bg-slate-50 p-2">
-          <p className="text-xs font-semibold text-slate-700">Porta {open.index}</p>
+        <div className="mt-3 flex flex-col gap-2 rounded-md border border-line-soft bg-concrete/60 p-2">
+          <p className="text-xs font-semibold text-ink-soft">Porta {open.index}</p>
           <label>
             <span className={LABEL}>Situação</span>
             <select
@@ -262,7 +302,7 @@ function PortEditor({
               ))}
             </select>
           </label>
-          <label className="flex items-center gap-2 text-sm text-slate-900">
+          <label className="flex items-center gap-2 text-sm text-ink">
             <input
               type="checkbox"
               checked={open.shared ?? false}
@@ -273,7 +313,7 @@ function PortEditor({
             Porta compartilhada
           </label>
           {open.shared ? (
-            <p className="text-xs leading-relaxed text-slate-600">
+            <p className="text-xs leading-relaxed text-ink-soft">
               Fica à disposição de outra Empresa. Quem a usa será indicado pelo pedido aceito no marketplace, quando
               essa integração existir.
             </p>
@@ -328,14 +368,14 @@ function TopologySection({
                 <ol className="flex flex-wrap items-center gap-x-1 gap-y-1">
                   {route.nodeIds.map((nodeId, index) => (
                     <li key={nodeId} className="flex items-center gap-1">
-                      {index > 0 && <span className="text-slate-400">›</span>}
+                      {index > 0 && <span className="text-ink-muted">›</span>}
                       {nodeId === selected.id ? (
-                        <span className="font-medium text-slate-900">{nameOf(nodeId)}</span>
+                        <span className="font-medium text-ink">{nameOf(nodeId)}</span>
                       ) : (
                         <button
                           type="button"
                           onClick={() => onSelect(nodeId)}
-                          className="text-blue-700 hover:underline"
+                          className="text-signal hover:underline"
                         >
                           {nameOf(nodeId)}
                         </button>
@@ -343,10 +383,10 @@ function TopologySection({
                     </li>
                   ))}
                 </ol>
-                <p className="mt-1 text-xs text-slate-500">{formatMeters(route.lengthMeters)} de cabo</p>
+                <p className="mt-1 text-xs text-ink-muted">{formatMeters(route.lengthMeters)} de cabo</p>
               </>
             ) : (
-              <p className="text-slate-500">Não conectado a nenhum POP.</p>
+              <p className="text-ink-muted">Não conectado a nenhum POP.</p>
             )}
           </div>
         )}
@@ -355,12 +395,12 @@ function TopologySection({
           <div>
             <p className={LABEL}>Orçamento óptico (estimado)</p>
             <dl className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-1">
-              <dt className="text-slate-600">Divisão</dt>
-              <dd className="text-right tabular-nums text-slate-900">1:{loss.split}</dd>
-              <dt className="text-slate-600">Atenuação</dt>
-              <dd className="text-right tabular-nums text-slate-900">{loss.lossDb.toFixed(1)} dB</dd>
-              <dt className="text-slate-600">Folga (GPON B+)</dt>
-              <dd className={`text-right font-medium tabular-nums ${loss.marginDb < 0 ? "text-red-700" : "text-green-700"}`}>
+              <dt className="text-ink-soft">Divisão</dt>
+              <dd className="text-right tabular-nums text-ink">1:{loss.split}</dd>
+              <dt className="text-ink-soft">Atenuação</dt>
+              <dd className="text-right tabular-nums text-ink">{loss.lossDb.toFixed(1)} dB</dd>
+              <dt className="text-ink-soft">Folga (GPON B+)</dt>
+              <dd className={`text-right font-medium tabular-nums ${loss.marginDb < 0 ? "text-danger" : "text-ok"}`}>
                 {loss.marginDb.toFixed(1)} dB
               </dd>
             </dl>
@@ -370,7 +410,7 @@ function TopologySection({
         {isCableKind(kind) && (selected.properties.viaNodeIds?.length ?? 0) > 0 && (
           <div>
             <p className={LABEL}>Passa por</p>
-            <p className="text-slate-900">{selected.properties.viaNodeIds!.map(nameOf).join(", ")}</p>
+            <p className="text-ink">{selected.properties.viaNodeIds!.map(nameOf).join(", ")}</p>
           </div>
         )}
 
@@ -379,18 +419,18 @@ function TopologySection({
           {hasImpact ? (
             <>
               <dl className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-1">
-                <dt className="text-slate-600">CTOs afetadas</dt>
-                <dd className="text-right tabular-nums text-slate-900">{impact.ctos}</dd>
-                <dt className="text-slate-600">Portas em uso</dt>
-                <dd className="text-right tabular-nums text-slate-900">{impact.portsInUse}</dd>
-                <dt className="text-slate-600">Portas compartilhadas</dt>
-                <dd className="text-right tabular-nums text-slate-900">{impact.sharedPorts}</dd>
-                <dt className="text-slate-600">Assinantes no mapa</dt>
-                <dd className="text-right tabular-nums text-slate-900">{impact.subscribers}</dd>
+                <dt className="text-ink-soft">CTOs afetadas</dt>
+                <dd className="text-right tabular-nums text-ink">{impact.ctos}</dd>
+                <dt className="text-ink-soft">Portas em uso</dt>
+                <dd className="text-right tabular-nums text-ink">{impact.portsInUse}</dd>
+                <dt className="text-ink-soft">Portas compartilhadas</dt>
+                <dd className="text-right tabular-nums text-ink">{impact.sharedPorts}</dd>
+                <dt className="text-ink-soft">Assinantes no mapa</dt>
+                <dd className="text-right tabular-nums text-ink">{impact.subscribers}</dd>
               </dl>
             </>
           ) : (
-            <p className="text-slate-500">Nada depende dele.</p>
+            <p className="text-ink-muted">Nada depende dele.</p>
           )}
         </div>
       </div>
@@ -412,12 +452,12 @@ function OpticalSummary({
   const equipment = optical.equipment.filter((item) => item.nodeId === node.id).length;
   const trace = node.properties.kind === "cto" ? traceCto(node.id, optical) : null;
   return (
-    <div className="flex flex-col gap-1 text-sm text-slate-700">
+    <div className="flex flex-col gap-1 text-sm text-ink-soft">
       <p>
         {equipment} {equipment === 1 ? "equipamento" : "equipamentos"}, {count} {count === 1 ? "ligação" : "ligações"}.
       </p>
       {trace && count > 0 && (
-        <p className={trace.complete ? "text-green-700" : "text-amber-800"}>{describeTrace(trace, optical, nameOf)}</p>
+        <p className={trace.complete ? "text-ok" : "text-warn"}>{describeTrace(trace, optical, nameOf)}</p>
       )}
     </div>
   );
@@ -445,7 +485,7 @@ export function Inspector({
   if (!selected) {
     return (
       <div className="flex flex-col gap-3">
-        <h2 className="text-sm font-semibold text-slate-900">Resumo do projeto</h2>
+        <h2 className="text-sm font-semibold text-ink">Resumo do projeto</h2>
         <Summary features={features} analysis={analysis} onSelect={onSelect} />
       </div>
     );
@@ -459,10 +499,10 @@ export function Inspector({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex items-center gap-2">
-        <span className="size-3 rounded-full" style={{ background: definition.color }} />
-        <h2 className="text-sm font-semibold text-slate-900">{definition.label}</h2>
-      </div>
+      <h2 className="sr-only">
+        {definition.label} {properties.name}
+      </h2>
+      <IdTag kind={definition.label} name={properties.name} color={definition.color} />
 
       {ownIssues.length > 0 && <IssueList issues={ownIssues} />}
 
@@ -499,14 +539,14 @@ export function Inspector({
             />
           </label>
           <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
-            <dt className="text-slate-600">Comprimento</dt>
-            <dd className="text-right font-medium tabular-nums text-slate-900">
+            <dt className="text-ink-soft">Comprimento</dt>
+            <dd className="text-right font-medium tabular-nums text-ink">
               {formatMeters(properties.lengthMeters ?? 0)}
             </dd>
-            <dt className="text-slate-600">Origem</dt>
-            <dd className="text-right text-slate-900">{nameOf(properties.fromNodeId)}</dd>
-            <dt className="text-slate-600">Destino</dt>
-            <dd className="text-right text-slate-900">{nameOf(properties.toNodeId)}</dd>
+            <dt className="text-ink-soft">Origem</dt>
+            <dd className="text-right text-ink">{nameOf(properties.fromNodeId)}</dd>
+            <dt className="text-ink-soft">Destino</dt>
+            <dd className="text-right text-ink">{nameOf(properties.toNodeId)}</dd>
           </dl>
         </>
       )}
@@ -540,13 +580,10 @@ export function Inspector({
         <section className={SECTION}>
           <h3 className={HEADING}>Ligações</h3>
           <OpticalSummary node={selected} optical={optical} nameOf={nameOf} />
-          <button
-            type="button"
-            onClick={() => onOpenDiagram(id)}
-            className="mt-2 w-full rounded-md bg-slate-900 px-2 py-1.5 text-sm font-medium text-white hover:bg-slate-700"
-          >
+          <Button variant="primary" onClick={() => onOpenDiagram(id)} className="mt-2 w-full">
+            <Workflow aria-hidden className="size-4" />
             Abrir diagrama de ligações
-          </button>
+          </Button>
         </section>
       )}
 
@@ -567,13 +604,9 @@ export function Inspector({
         />
       </label>
 
-      <button
-        type="button"
-        onClick={onDelete}
-        className="rounded-md border border-red-200 px-2 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50"
-      >
-        Excluir elemento
-      </button>
+      <Button variant="danger" onClick={onDelete} className="mt-1">
+        Excluir {definition.label.toLowerCase()}
+      </Button>
     </div>
   );
 }

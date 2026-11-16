@@ -40,6 +40,7 @@ aqui (ADR 0001). O estado atual dos serviços está em `docs/12`; o que falta ne
 | O que o editor precisa dos outros serviços | `docs/13-pedidos-a-outros-times.md` |
 | O que o Geosite faz e o que vale trazer | `docs/14-referencia-geosite.md` |
 | **Rede neutra, o foco do editor**: gestão, ofertas, monitoramento | `docs/15-rede-neutra.md` |
+| Persona, tokens, tipografia e princípios da interface | `docs/16-design.md` |
 
 `src/domain/types.ts` é a referência canônica das entidades. Se mudar uma entidade,
 atualize `docs/03-modelo-de-dados.md` no mesmo commit.
@@ -68,6 +69,7 @@ src/features/publish/   KMZ no formato da geo (neutra-assets-v1) e campos que vo
 src/features/import/    importação de KML/KMZ: leitura, classificação, revisão, montagem
 src/features/projects/  lista e criação de projetos
 src/lib/storage.ts      única porta de entrada para persistência (hoje localStorage)
+src/components/ui.tsx   peças de interface: Button, IdTag, SectionTitle, Facts, FIELD, LABEL
 src/app/                rotas; páginas só compõem features
 ```
 
@@ -90,6 +92,9 @@ src/app/                rotas; páginas só compõem features
 - **Escopo por projeto:** todo registro de rede carrega `projectId`; todo projeto,
   `companyId` (o `organization_id` da plataforma). Nenhuma consulta futura pode omitir
   esse filtro. Nenhum cabo cruza projetos.
+- **Interface:** cores pelos tokens de `src/app/globals.css` (`ink`, `concrete`, `tag`…),
+  nunca `slate-*` nem hex solto em componente. Títulos em frase, sem caixa alta. Estado
+  nunca só por cor. Alvo de toque com `pointer-coarse:min-h-11`. Ver `docs/16-design.md`.
 - **Unidades:** metros, dB, dBm. Coordenadas em `[lng, lat]` (ordem do GeoJSON).
 
 ## Armadilhas conhecidas

@@ -1,6 +1,7 @@
 import { ELEMENTS, ELEMENT_KINDS } from "@/domain/catalog";
 
-const SELECTED = "#f59e0b";
+// O mesmo amarelo de etiqueta do painel (docs/16-design.md).
+const SELECTED = "#ffc700";
 const FALLBACK = "#3b82f6";
 
 const isActive = ["==", ["get", "active"], "true"];

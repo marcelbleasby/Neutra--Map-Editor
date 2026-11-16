@@ -42,7 +42,7 @@ function AddEquipment({ nodeKind, onAdd }: { nodeKind: string; onAdd: (spec: Equ
     <div className="flex items-center gap-2">
       <select
         aria-label="Equipamento a adicionar"
-        className="rounded-md border border-slate-300 bg-white px-2 py-1 text-sm text-slate-900"
+        className="rounded-md border border-line bg-plate px-2 py-1 text-sm text-ink"
         value={choice}
         onChange={(event) => setChoice(event.target.value)}
       >
@@ -57,7 +57,7 @@ function AddEquipment({ nodeKind, onAdd }: { nodeKind: string; onAdd: (spec: Equ
       <button
         type="button"
         onClick={() => onAdd({ kind: options[optionIndex].kind, size: options[optionIndex].sizes[sizeIndex] })}
-        className="rounded-md border border-slate-300 px-2.5 py-1 text-sm text-slate-700 hover:bg-slate-100"
+        className="rounded-md border border-line px-2.5 py-1 text-sm text-ink-soft hover:bg-concrete"
       >
         Adicionar
       </button>
@@ -223,21 +223,21 @@ export function NodeDiagram({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4"
       onKeyDown={(event) => event.key === "Escape" && onClose()}
     >
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="diagram-title"
-        className="flex h-full max-h-[52rem] w-full max-w-5xl flex-col rounded-lg bg-slate-50 shadow-xl"
+        className="flex h-full max-h-[52rem] w-full max-w-5xl flex-col rounded-lg bg-concrete/60 shadow-xl"
       >
-        <header className="flex flex-wrap items-center gap-3 border-b border-slate-200 bg-white px-5 py-3">
+        <header className="flex flex-wrap items-center gap-3 border-b border-line-soft bg-plate px-5 py-3">
           <span className="size-3 rounded-full" style={{ background: ELEMENTS[kind].color }} />
-          <h2 id="diagram-title" className="text-base font-semibold text-slate-900">
+          <h2 id="diagram-title" className="text-base font-semibold text-ink">
             Ligações de {name}
           </h2>
-          <span className="text-sm text-slate-500">
+          <span className="text-sm text-ink-muted">
             {connections.length} {connections.length === 1 ? "ligação" : "ligações"}
           </span>
           <div className="ml-auto flex items-center gap-3">
@@ -248,7 +248,7 @@ export function NodeDiagram({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-700"
+              className="rounded-md bg-ink px-3 py-1.5 text-sm font-medium text-white hover:bg-ink-soft"
             >
               Fechar
             </button>
@@ -257,7 +257,7 @@ export function NodeDiagram({
 
         <div className="min-h-0 flex-1 overflow-auto p-2">
           {isEmpty ? (
-            <p className="p-6 text-sm text-slate-600">
+            <p className="p-6 text-sm text-ink-soft">
               Nada para ligar ainda. Conecte um cabo a {name} no mapa
               {EQUIPMENT_OPTIONS[kind] ? " ou adicione um equipamento acima." : "."}
             </p>
@@ -306,27 +306,27 @@ export function NodeDiagram({
           )}
         </div>
 
-        <footer className="min-h-16 border-t border-slate-200 bg-white px-5 py-3 text-sm" aria-live="polite">
+        <footer className="min-h-16 border-t border-line-soft bg-plate px-5 py-3 text-sm" aria-live="polite">
           {error && (
             <p role="alert" className="mb-1 text-red-700">
               {error}
             </p>
           )}
           {!picked ? (
-            <p className="text-slate-600">
+            <p className="text-ink-soft">
               Clique em uma fibra ou porta e depois em outra para ligar as duas. Clique em uma ponta ligada para ver a
               ligação e o caminho do sinal.
             </p>
           ) : (
             <div className="flex flex-col gap-1">
-              <p className="font-medium text-slate-900">{endpointLabel(picked, model)}</p>
+              <p className="font-medium text-ink">{endpointLabel(picked, model)}</p>
               {pickedConnections.length === 0 && (
-                <p className="text-slate-600">Sem ligação. Clique em outra ponta para ligar.</p>
+                <p className="text-ink-soft">Sem ligação. Clique em outra ponta para ligar.</p>
               )}
               {pickedConnections.map((connection) => {
                 const other = sameEndpoint(connection.a, picked) ? connection.b : connection.a;
                 return (
-                  <p key={connection.id} className="flex items-center gap-3 text-slate-700">
+                  <p key={connection.id} className="flex items-center gap-3 text-ink-soft">
                     <span>
                       Ligada a {endpointLabel(other, model)} por {CONNECTION_LABELS[connection.kind]}.
                     </span>
@@ -340,7 +340,7 @@ export function NodeDiagram({
                   </p>
                 );
               })}
-              {trace && <p className="text-slate-700">{describeTrace(trace, model, nameOf)}</p>}
+              {trace && <p className="text-ink-soft">{describeTrace(trace, model, nameOf)}</p>}
             </div>
           )}
         </footer>

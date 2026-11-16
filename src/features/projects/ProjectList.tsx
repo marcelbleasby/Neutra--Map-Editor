@@ -5,10 +5,9 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { centerOf } from "@/features/import/build";
 import { prepareImport, setPendingImport } from "@/features/import/draft";
+import { Button, FIELD, LABEL } from "@/components/ui";
 import { createProject, deleteProject, DEMO_COMPANY, listProjects } from "@/lib/storage";
 
-const FIELD = "w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-900";
-const LABEL = "mb-1 block text-xs font-medium text-slate-600";
 
 // Centro inicial padrão: São Paulo.
 const DEFAULT_LAT = "-23.5505";
@@ -56,47 +55,50 @@ export default function ProjectList() {
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-4 py-8">
+    <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 overflow-y-auto px-4 py-6 md:gap-8 md:py-10">
       <header>
-        <p className="text-sm text-slate-500">{DEMO_COMPANY.name}</p>
-        <h1 className="text-2xl font-semibold text-slate-900">Projetos</h1>
+        <p className="text-sm text-ink-muted">{DEMO_COMPANY.name}</p>
+        <h1 className="text-3xl font-semibold text-ink">Projetos</h1>
       </header>
 
       <div className="grid gap-8 md:grid-cols-[1fr_20rem]">
         <section aria-label="Projetos da empresa">
           {projects.length === 0 ? (
-            <p className="rounded-lg border border-dashed border-slate-300 p-6 text-sm text-slate-500">
-              Nenhum projeto ainda. Crie o primeiro para começar a mapear a rede.
+            <p className="rounded-md border-2 border-dashed border-line bg-plate p-6 text-ink-soft">
+              Nenhum projeto ainda. Crie o primeiro ao lado, do zero ou a partir do KMZ da sua rede.
             </p>
           ) : (
             <ul className="flex flex-col gap-2">
               {projects.map((project) => (
                 <li
                   key={project.id}
-                  className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3"
+                  className="flex items-center gap-2 rounded-md border border-line bg-plate py-1 pr-1 pl-1 hover:border-ink"
                 >
-                  <Link href={`/projetos/${project.id}`} className="min-w-0 flex-1">
-                    <span className="block truncate font-medium text-slate-900">{project.name}</span>
-                    <span className="block truncate text-sm text-slate-500">
-                      {project.description ?? "Sem descrição"} · atualizado em{" "}
-                      {new Date(project.updatedAt).toLocaleDateString("pt-BR")}
+                  <Link href={`/projetos/${project.id}`} className="min-w-0 flex-1 rounded px-3 py-2">
+                    <span className="block truncate text-lg font-semibold text-ink">{project.name}</span>
+                    {project.description && (
+                      <span className="block truncate text-sm text-ink-soft">{project.description}</span>
+                    )}
+                    <span className="block text-sm text-ink-muted">
+                      Atualizado em {new Date(project.updatedAt).toLocaleDateString("pt-BR")}
                     </span>
                   </Link>
-                  <button
-                    type="button"
+                  <Button
+                    variant="quiet"
                     onClick={() => handleDelete(project.id, project.name)}
-                    className="rounded-md px-2 py-1 text-sm text-red-700 hover:bg-red-50"
+                    aria-label={`Excluir o projeto ${project.name}`}
+                    className="text-danger hover:bg-danger-soft"
                   >
                     Excluir
-                  </button>
+                  </Button>
                 </li>
               ))}
             </ul>
           )}
         </section>
 
-        <form onSubmit={handleCreate} className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-4">
-          <h2 className="text-sm font-semibold text-slate-900">Novo projeto</h2>
+        <form onSubmit={handleCreate} className="flex flex-col gap-3 self-start rounded-md border border-line bg-plate p-4">
+          <h2 className="text-lg font-semibold text-ink">Novo projeto</h2>
           <label>
             <span className={LABEL}>Nome</span>
             <input name="name" className={FIELD} placeholder="Ex.: Expansão Zona Norte" />
@@ -116,25 +118,25 @@ export default function ProjectList() {
             </label>
           </div>
           <label>
-            <span className={LABEL}>Começar de um KML/KMZ (opcional)</span>
+            <span className={LABEL}>Arquivo da rede, KML ou KMZ (opcional)</span>
             <input
               name="file"
               type="file"
               accept=".kml,.kmz"
-              className="w-full text-sm text-slate-700 file:mr-2 file:rounded-md file:border-0 file:bg-slate-100 file:px-2.5 file:py-1.5 file:text-sm file:text-slate-900"
+              className="w-full text-sm text-ink-soft file:mr-2 file:mr-3 file:min-h-9 file:cursor-pointer file:rounded-md file:border file:border-line file:bg-plate file:px-3 file:text-sm file:font-medium file:text-ink"
             />
-            <span className="mt-1 block text-xs text-slate-500">
+            <span className="mt-1 block text-sm text-ink-muted">
               Com arquivo, o mapa abre na rede importada e a posição acima é ignorada.
             </span>
           </label>
           {error && (
-            <p role="alert" className="text-sm text-red-700">
+            <p role="alert" className="text-sm text-danger">
               {error}
             </p>
           )}
-          <button type="submit" className="rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-700">
-            Criar e abrir editor
-          </button>
+          <Button type="submit" variant="primary" className="mt-1">
+            Criar e abrir o editor
+          </Button>
         </form>
       </div>
     </main>

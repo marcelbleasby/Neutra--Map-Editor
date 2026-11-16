@@ -64,13 +64,25 @@ _Avoid_: Cessão, locação, lease
 
 ### Atendimento
 
-**Cobertura**:
-Um endereço tem cobertura quando está dentro de uma área de cobertura da Empresa. É o que a plataforma chama de *feasibility*, e é tudo que a Empresa compradora enxerga.
-_Avoid_: Viabilidade (para este sentido)
+**Cobertura da oferta**:
+Área onde uma oferta atende, definida na geo: os polígonos da versão de KMZ ligada à oferta, opcionalmente recortados por áreas escolhidas, por um polígono desenhado ou por círculos em volta de pontos da rede. É o que a Empresa compradora vê.
+_Avoid_: Mancha, área de atendimento, cobertura (sozinha)
 
 **Viabilidade**:
-Um endereço tem viabilidade quando há ao menos uma CTO com porta livre a até 250 m dele, em linha reta. Pode haver mais de uma CTO nessa condição. Só a Empresa dona da rede consulta.
-_Avoid_: Cobertura (para este sentido), disponibilidade, feasibility
+Um ponto tem viabilidade para uma oferta quando está dentro da cobertura da oferta. Quem decide é a geo; cada consulta gera uma evidência que vale 300 s, e a Empresa dona da rede confirma ao aceitar o pedido.
+_Avoid_: Porta livre por perto, disponibilidade, cobertura
+
+**Raio de atendimento**:
+Distância em volta de uma CTO usada para montar a cobertura da oferta a partir de pontos da rede: 250 m, em linha reta.
+_Avoid_: Raio de viabilidade, raio de proximidade
+
+**Portas próximas**:
+Consulta interna da Empresa: as CTOs com porta livre a até o raio de atendimento de um ponto. Ajuda a confirmar que dá para atender; não é viabilidade.
+_Avoid_: Viabilidade, disponibilidade
+
+**Área de cobertura**:
+Polígono desenhado no projeto. Sozinho não dá viabilidade: só conta quando faz parte da versão de KMZ ligada a uma oferta.
+_Avoid_: Cobertura da oferta, mancha
 
 **Assinante**:
 Quem é atendido por uma porta de CTO. No editor é apenas um nome ou código anotado na porta; o cadastro pertence ao sistema de gestão da Empresa.

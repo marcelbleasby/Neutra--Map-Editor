@@ -18,7 +18,8 @@ O editor é a ferramenta do Seller para **manter a rede por trás dessas ofertas
 
 - desenhar ou importar a rede e manter sua topologia correta;
 - saber, porta a porta, o que está livre, em uso, com defeito ou compartilhado;
-- responder se há viabilidade num endereço;
+- montar a cobertura das ofertas a partir das CTOs com porta para compartilhar;
+- confirmar se há porta livre perto de um endereço;
 - saber o que cai se um elemento falhar.
 
 Quem compra **não entra no editor**. A regra da plataforma é que traçados, POPs e
@@ -50,19 +51,26 @@ Os papéis são os de Seller do serviço de identidade.
 | --- | --- |
 | `seller_owner`, `seller_operations` | Editam a rede |
 | `seller_technical` | Edita ligações e a situação de elementos e portas |
-| `seller_commercial`, `seller_support` | Consultam, inclusive viabilidade |
+| `seller_commercial`, `seller_support` | Consultam, inclusive portas próximas |
 | `seller_finance` | Não acessa |
 
-## Cobertura e viabilidade
+## Viabilidade
 
-São duas perguntas diferentes:
+**Viabilidade é definida pela geo**, não pelo editor: um ponto tem viabilidade para
+uma oferta quando está dentro da **cobertura da oferta**. Cada consulta gera uma
+evidência com prazo de 300 s, que o pedido usa no checkout; a Empresa dona da rede
+ainda confirma ao aceitar o pedido (regra RN-GEO-01).
 
-- **Cobertura:** o endereço está dentro de uma área de cobertura? É o que a
-  plataforma já responde ao comprador.
-- **Viabilidade:** há CTO com porta livre a até 250 m do endereço, em linha reta? Só
-  a dona da rede consulta. Para ela contam as portas livres não compartilhadas.
+O papel do editor é **alimentar a cobertura da oferta com a rede real**. A geo aceita
+montar a cobertura como círculos em volta de pontos da rede (`coverageNetworkPoints`);
+o editor entrega esses pontos — as CTOs com porta compartilhada livre, com o raio de
+atendimento de 250 m. Assim a viabilidade que o comprador vê nasce de onde há porta
+para ele, e não de um polígono desenhado à mão.
 
-Um endereço pode ter cobertura e não ter viabilidade.
+Para a própria Empresa, o editor tem a consulta de **portas próximas**: dado um ponto,
+quais CTOs a até 250 m têm porta livre, separando próprias de compartilhadas. Ela
+serve para confirmar que dá para atender — por exemplo, antes de aceitar um pedido —
+e não substitui a viabilidade.
 
 ## Referência: Geosite Telecom
 

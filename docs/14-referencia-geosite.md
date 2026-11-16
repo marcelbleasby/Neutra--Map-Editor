@@ -41,8 +41,8 @@ Três coisas dessa página não aparecem nas notas de versão:
 | Modo Projeto | Rede **projetada**, separada da existente, que depois é "convertida" | Situação "Planejado" de cada elemento |
 | Redes e subredes | Agrupamento manual de elementos, com camada e filtro próprios | Topologia (calculada, não cadastrada) |
 | Tenants | Empresas que usam portas da rede, com controle por município | Compartilhamento |
-| Análise de Viabilidade | Consulta por endereço, com registro do resultado | Viabilidade |
-| Mancha de atendimento | Área atendida, calculada ou personalizada | Área de cobertura |
+| Análise de Viabilidade | Consulta por endereço, olhando portas de splitter, com registro do resultado | Portas próximas (a viabilidade da plataforma é da geo e não olha portas) |
+| Mancha de atendimento | Área atendida, calculada ou personalizada | Cobertura da oferta |
 
 **Atenção ao vocabulário:** "Projeto" no Geosite é a rede ainda não construída. Aqui,
 Projeto é um recorte da rede (`GLOSSARY.md`). Quem vem do Geosite vai estranhar.
@@ -77,7 +77,7 @@ Projeto é um recorte da rede (`GLOSSARY.md`). Quem vem do Geosite vai estranhar
 | Drop de atendimento como elemento próprio | Tem (cabo drop) |
 | Aviso de cliente a mais de 20 m da caixa | **Não tem** |
 | Drop já ocupa a primeira porta livre do splitter | **Não tem**: drop e porta não se ligam sozinhos |
-| Viabilidade com "portas de splitter disponíveis" | Decidida, não implementada |
+| Viabilidade com "portas de splitter disponíveis" | Portas próximas faz isso; a viabilidade da geo, não |
 | Log de viabilidade: viável ou inviável, vários cenários, histórico | **Não tem** |
 | Mancha de atendimento **calculada** a partir da rede | **Não tem**: a área é desenhada à mão |
 | Tenants com portas e **limite de portas por município** | Outro modelo: porta a porta, via marketplace |
@@ -131,7 +131,7 @@ Ordenado por quanto agrega em relação ao esforço, considerando o que o editor
 | 3 | **Drop ocupa a primeira porta livre**, com aviso de assinante distante da CTO | Hoje drop e porta são cadastros separados que podem discordar | Baixo |
 | 4 | **Ligar várias fibras de uma vez** e replicar ao longo da rota | Sem isso, documentar um cabo de 48 fibras são 48 pares de cliques | Médio |
 | 5 | **Fibras disponíveis por cabo** | Mostra capacidade ociosa; os dados já existem | Baixo |
-| 6 | **Área de cobertura calculada** a partir das CTOs com porta livre | Substitui o desenho à mão e fica coerente com a Viabilidade (250 m) | Médio |
+| 6 | **Cobertura calculada** a partir das CTOs com porta livre | Substitui o desenho à mão. Feito: pontos com raio de 250 m para a cobertura da oferta | Feito |
 | 6b | **Caminho do drop na viabilidade**: mostrar o traçado até o endereço, não só a distância | É como o Geosite apresenta a viabilidade. Decidimos linha reta por não haver rota viária na plataforma | Alto: exige malha de ruas ou de postes |
 | 7 | **Registro das consultas de viabilidade** | Histórico de onde se negou atendimento orienta a expansão | Baixo, mas depende de onde gravar |
 | 8 | **Continuar cadastrando** o mesmo tipo e **lista ao clicar em ponto sobreposto** | Produtividade no uso mais repetitivo do mapa | Baixo |

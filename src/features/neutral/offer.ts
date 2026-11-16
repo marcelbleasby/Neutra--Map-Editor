@@ -4,8 +4,8 @@ import type { Id } from "@/domain/types";
 import type { ElementFeature } from "@/features/editor/model";
 import {
   circleRing,
-  FEASIBILITY_RADIUS_METERS,
   insideRing,
+  SERVICE_RADIUS_METERS,
   networkInventory,
   type CtoInventory,
   type NetworkInventory,
@@ -13,8 +13,8 @@ import {
 
 /**
  * Da rede para a oferta: quantas portas compartilhadas livres há num conjunto de
- * CTOs e qual a área que elas atendem. São os dois dados que uma oferta de CTO
- * no marketplace pede (quantidade de portas e cobertura).
+ * CTOs e em volta de quais pontos fica a cobertura da oferta. São os dois dados
+ * que uma oferta de CTO no marketplace pede (quantidade de portas e cobertura).
  */
 
 export interface OfferDraft {
@@ -42,14 +42,44 @@ export function draftOffer(features: ElementFeature[], areaId?: Id): OfferDraft 
   };
 }
 
+/** Ponto da rede no formato que a cobertura da oferta aceita (`coverageNetworkPoints`). */
+export interface CoverageNetworkPoint {
+  longitude: number;
+  latitude: number;
+  radiusMeters: number;
+}
+
+/** Limite de pontos por oferta na geo. */
+export const MAX_COVERAGE_POINTS = 500;
+
 /**
- * Área atendida por um conjunto de CTOs: a união dos círculos de 250 m em volta
- * de cada uma. CTOs afastadas dão áreas separadas — um polígono por grupo, porque
- * a plataforma só aceita polígono simples como área de cobertura.
+ * Pontos para a cobertura da oferta: um círculo do raio de atendimento em volta
+ * de cada CTO. A geo une os círculos, recorta nos polígonos da versão de KMZ e
+ * passa a responder viabilidade por essa área. Coordenadas repetidas são
+ * descartadas, porque a geo as recusa.
+ */
+export function offerCoveragePoints(
+  positions: Position[],
+  radiusMeters = SERVICE_RADIUS_METERS,
+): { points: CoverageNetworkPoint[]; tooMany: boolean } {
+  const seen = new Set<string>();
+  const points: CoverageNetworkPoint[] = [];
+  for (const [longitude, latitude] of positions) {
+    const key = `${longitude},${latitude}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    points.push({ longitude, latitude, radiusMeters });
+  }
+  return { points, tooMany: points.length > MAX_COVERAGE_POINTS };
+}
+
+/**
+ * Prévia da área que esses pontos formam: a união dos círculos. É só para ver no
+ * mapa; a área que vale é a que a geo calcula, recortada no KMZ.
  */
 export function coverageFromCtos(
   positions: Position[],
-  radiusMeters = FEASIBILITY_RADIUS_METERS,
+  radiusMeters = SERVICE_RADIUS_METERS,
 ): Polygon[] {
   const circles = positions.map(
     (position): Feature<Polygon> => ({

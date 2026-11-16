@@ -2,14 +2,14 @@
 
 Cabos, fibras, portas e ligações não tinham serviço dono na plataforma. Decidimos
 ampliar a `geo-api-neutra` em vez de criar um serviço de inventário de rede: ela já
-usa PostGIS, já é dona dos pontos de rede e da cobertura, e a viabilidade — que
-depende de saber quais CTOs têm porta livre — é responsabilidade dela.
+usa PostGIS, já é dona dos pontos de rede, da cobertura e da viabilidade, e uma
+viabilidade que um dia considere porta livre precisaria das portas no mesmo lugar.
 
 ## Considered Options
 
 - **Serviço novo de inventário de rede.** Separaria bem as responsabilidades, mas
   dividiria a rede em dois bancos (pontos na geo, cabos e portas no novo) e exigiria
-  consulta entre serviços para responder viabilidade.
+  consulta entre serviços se a viabilidade passar a considerar portas.
 
 ## Consequences
 

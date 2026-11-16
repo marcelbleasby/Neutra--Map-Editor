@@ -12,9 +12,9 @@ outros times, em [`docs/13-pedidos-a-outros-times.md`](13-pedidos-a-outros-times
 - Importação de KML/KMZ com classificação pelo nome.
 - Portas de CTO com situação, compartilhamento e assinante.
 - Rede neutra: estoque de portas para ofertar, CTOs com porta compartilhada no mapa e
-  consulta de viabilidade por ponto (`docs/15-rede-neutra.md`).
-- Portas para ofertar: soma por projeto ou por área, área de cobertura calculada a
-  partir das CTOs e ocupação em planilha.
+  consulta de portas próximas por ponto (`docs/15-rede-neutra.md`).
+- Portas para ofertar: soma por projeto ou por área, pontos para a cobertura da oferta
+  (`coverageNetworkPoints`) e ocupação em planilha.
 - Glossário e decisões registradas.
 
 Tudo isso roda no navegador, com os dados no `localStorage`.
@@ -45,7 +45,7 @@ Não depende de nenhum pedido a outro time.
 Dentro do editor, sem depender de outros times. O foco é rede neutra
 (`docs/15-rede-neutra.md`); os itens de topologia entram quando servem a ela.
 
-- Viabilidade por endereço (hoje é por clique no mapa) e registro das consultas.
+- Portas próximas por endereço (hoje é por clique no mapa).
 - Reservar no editor as portas que já estão numa oferta.
 - Impacto de falha destacado no mapa, com as portas compartilhadas atingidas.
 
@@ -59,7 +59,7 @@ Dentro do editor, sem depender de outros times. O foco é rede neutra
 Depende dos pedidos G2, G3, G4 e M1.
 
 - Portas, fibras e ligações como entidades da geo, com migração dos atributos.
-- Viabilidade respondida pela geo.
+- Enviar os pontos da cobertura ao ligar a oferta, e refazer a cobertura quando a ocupação muda.
 - Compartilhamento ligado ao pedido do marketplace: a porta mostra qual Empresa a usa.
 - Publicar a área de cobertura do Projeto como cobertura de uma oferta.
 

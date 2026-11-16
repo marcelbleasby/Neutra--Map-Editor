@@ -11,8 +11,8 @@ da feição inteira.
 
 ## Consequences
 
-- Viabilidade ("CTO com porta livre a até 250 m") não pode ser respondida pela geo
-  enquanto as portas forem atributo; o editor calcula sobre o projeto carregado.
+- A consulta de portas próximas não pode ser respondida pela geo enquanto as portas
+  forem atributo; o editor calcula sobre o projeto carregado.
 - Quando a geo tiver as entidades, há uma migração a fazer. Nada novo deve ser
   construído contando com o formato dos atributos.
 - O pedido das entidades à geo fica aberto desde o início da integração.

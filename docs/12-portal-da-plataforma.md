@@ -84,7 +84,9 @@ Consequências para o editor:
 - **Os tipos não batem.** A geo não tem POP, caixa subterrânea, reserva, cliente nem
   distinção entre backbone, distribuição e drop (esta última só aparece na topologia
   inferida).
-- **A viabilidade da plataforma é o que o glossário do editor chama de Cobertura.**
+- **A viabilidade é da geo**: ponto dentro da cobertura da oferta. A cobertura pode
+  ser montada com círculos em volta de pontos da rede (`coverageNetworkPoints`), que
+  é por onde o editor alimenta a oferta (`docs/15-rede-neutra.md`).
 
 ## Notification (substitui a conclusão de `docs/08`)
 

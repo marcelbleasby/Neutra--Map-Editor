@@ -4,11 +4,14 @@ import type { CtoPort, ElementFeature } from "@/features/editor/model";
 
 /**
  * Rede neutra: o que a Empresa tem de portas, quanto disso é compartilhado, e
- * onde há viabilidade. Vocabulário em GLOSSARY.md.
+ * onde há porta livre perto de um ponto. Vocabulário em GLOSSARY.md.
+ *
+ * Viabilidade não é calculada aqui: quem decide é a geo, pela cobertura da
+ * oferta (docs/12-portal-da-plataforma.md).
  */
 
-/** Raio da Viabilidade, em linha reta do endereço até a CTO. */
-export const FEASIBILITY_RADIUS_METERS = 250;
+/** Raio de atendimento: distância em volta de uma CTO, em linha reta. */
+export const SERVICE_RADIUS_METERS = 250;
 
 export interface PortCounts {
   total: number;
@@ -97,44 +100,39 @@ export function insideRing(point: Position, ring: Position[]): boolean {
   return inside;
 }
 
-export interface FeasibilityCandidate extends CtoInventory {
+export interface NearbyCto extends CtoInventory {
   distanceMeters: number;
 }
 
-export interface Feasibility {
+export interface NearbyPorts {
   point: Position;
-  /** Cobertura: o ponto está dentro de alguma área de cobertura. */
-  covered: boolean;
   /** CTOs no raio, da mais próxima para a mais distante. */
-  candidates: FeasibilityCandidate[];
-  /** Viabilidade para a própria Empresa: há porta própria livre no raio. */
-  viable: boolean;
-  /** Há porta compartilhada livre no raio: o que outra Empresa poderia usar ali. */
-  sharedViable: boolean;
+  ctos: NearbyCto[];
+  /** Há porta própria livre no raio: a Empresa pode atender um assinante seu. */
+  ownAvailable: boolean;
+  /** Há porta compartilhada livre no raio: dá para atender um pedido de outra Empresa. */
+  sharedAvailable: boolean;
 }
 
 /**
- * Viabilidade num ponto: CTOs com porta livre a até 250 m, em linha reta.
- * Cobertura é outra pergunta e vem junto para as duas não serem confundidas.
+ * Portas próximas de um ponto: CTOs a até o raio de atendimento, em linha reta.
+ * Serve à Empresa para confirmar se consegue atender — por exemplo, antes de
+ * aceitar um pedido. Não é viabilidade: essa é a geo que responde.
  */
-export function checkFeasibility(
+export function findNearbyPorts(
   point: Position,
   features: ElementFeature[],
-  radiusMeters = FEASIBILITY_RADIUS_METERS,
-): Feasibility {
-  const candidates = networkInventory(features)
+  radiusMeters = SERVICE_RADIUS_METERS,
+): NearbyPorts {
+  const ctos = networkInventory(features)
     .ctos.map((cto) => ({ ...cto, distanceMeters: distanceMeters(point, cto.position) }))
     .filter((cto) => cto.distanceMeters <= radiusMeters)
     .sort((a, b) => a.distanceMeters - b.distanceMeters);
-  const covered = features.some(
-    (feature) => feature.geometry.type === "Polygon" && insideRing(point, feature.geometry.coordinates[0]),
-  );
   return {
     point,
-    covered,
-    candidates,
-    viable: candidates.some((cto) => cto.ownFree > 0),
-    sharedViable: candidates.some((cto) => cto.sharedFree > 0),
+    ctos,
+    ownAvailable: ctos.some((cto) => cto.ownFree > 0),
+    sharedAvailable: ctos.some((cto) => cto.sharedFree > 0),
   };
 }
 
@@ -148,15 +146,15 @@ export function circleRing(center: Position, radiusMeters: number, steps = 64): 
   });
 }
 
-/** O que a consulta de viabilidade desenha no mapa: ponto, raio e linha até cada CTO. */
-export function feasibilityOverlay(result: Feasibility, radiusMeters = FEASIBILITY_RADIUS_METERS): Feature[] {
+/** O que a consulta de portas próximas desenha no mapa: ponto, raio e linha até cada CTO. */
+export function nearbyOverlay(result: NearbyPorts, radiusMeters = SERVICE_RADIUS_METERS): Feature[] {
   return [
     {
       type: "Feature",
       properties: { role: "radius" },
       geometry: { type: "Polygon", coordinates: [circleRing(result.point, radiusMeters)] },
     },
-    ...result.candidates.map((cto): Feature => ({
+    ...result.ctos.map((cto): Feature => ({
       type: "Feature",
       properties: { role: "link", free: cto.ownFree + cto.sharedFree },
       geometry: { type: "LineString", coordinates: [result.point, cto.position] },

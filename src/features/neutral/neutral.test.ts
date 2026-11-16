@@ -1,16 +1,16 @@
 import { describe, expect, it } from "vitest";
 import { makeCtoPorts, type CtoPort, type ElementFeature } from "@/features/editor/model";
 import {
-  checkFeasibility,
   countPorts,
   distanceMeters,
-  feasibilityOverlay,
+  findNearbyPorts,
+  nearbyOverlay,
   networkInventory,
   sharedRings,
   shareFreePorts,
   unshareFreePorts,
 } from "./neutral";
-import { coverageFromCtos, draftOffer, inventoryCsv } from "./offer";
+import { coverageFromCtos, draftOffer, inventoryCsv, offerCoveragePoints } from "./offer";
 
 // No equador, 0,001° de longitude ≈ 111,2 m.
 const cto = (id: string, lng: number, ports: CtoPort[]): ElementFeature => ({
@@ -62,7 +62,7 @@ describe("inventário de portas", () => {
   });
 });
 
-describe("viabilidade", () => {
+describe("portas próximas", () => {
   const network = [
     cto("perto-cheia", 0.0005, ports("UUUU")), // ~56 m, sem porta livre
     cto("perto-compartilhada", 0.001, ports("UUll")), // ~111 m, só compartilhadas livres
@@ -76,26 +76,23 @@ describe("viabilidade", () => {
   });
 
   it("lista as CTOs a até 250 m, da mais próxima para a mais distante", () => {
-    const result = checkFeasibility([0, 0], network);
-    expect(result.candidates.map((c) => c.id)).toEqual(["perto-cheia", "perto-compartilhada", "media-propria"]);
-    expect(Math.round(result.candidates[2].distanceMeters)).toBe(222);
-    expect(result).toMatchObject({ covered: true, viable: true, sharedViable: true });
+    const result = findNearbyPorts([0, 0], network);
+    expect(result.ctos.map((c) => c.id)).toEqual(["perto-cheia", "perto-compartilhada", "media-propria"]);
+    expect(Math.round(result.ctos[2].distanceMeters)).toBe(222);
+    expect(result).toMatchObject({ ownAvailable: true, sharedAvailable: true });
   });
 
-  it("porta compartilhada livre não dá viabilidade para a própria Empresa", () => {
-    const result = checkFeasibility([0, 0], network.filter((f) => f.id !== "media-propria"));
-    expect(result).toMatchObject({ viable: false, sharedViable: true });
+  it("separa porta própria de porta compartilhada", () => {
+    const result = findNearbyPorts([0, 0], network.filter((f) => f.id !== "media-propria"));
+    expect(result).toMatchObject({ ownAvailable: false, sharedAvailable: true });
   });
 
-  it("cobertura e viabilidade são independentes", () => {
-    // Dentro da área, mas a única CTO no raio está cheia.
-    expect(checkFeasibility([-0.0009, 0], network)).toMatchObject({ covered: true, viable: false });
-    // Fora da área, com CTO de porta livre a menos de 250 m.
-    expect(checkFeasibility([0.0035, 0], network)).toMatchObject({ covered: false, viable: true });
+  it("não olha áreas de cobertura: viabilidade é da geo", () => {
+    expect(findNearbyPorts([0, 0], network)).not.toHaveProperty("covered");
   });
 
   it("gera o desenho do mapa: raio, linha por CTO e ponto", () => {
-    const overlay = feasibilityOverlay(checkFeasibility([0, 0], network));
+    const overlay = nearbyOverlay(findNearbyPorts([0, 0], network));
     expect(overlay.map((f) => f.properties?.role)).toEqual(["radius", "link", "link", "link", "point"]);
     expect(sharedRings(network).map((f) => f.properties?.sharedFree)).toEqual([2]);
   });
@@ -118,7 +115,18 @@ describe("da rede para a oferta", () => {
     expect(inside.portCount).toBe(3);
   });
 
-  it("une os círculos de CTOs vizinhas e separa as afastadas", () => {
+  it("monta os pontos da cobertura da oferta no formato da geo", () => {
+    const { points, tooMany } = offerCoveragePoints([[-46.6, -23.5], [-46.61, -23.5], [-46.6, -23.5]]);
+    expect(points).toEqual([
+      { longitude: -46.6, latitude: -23.5, radiusMeters: 250 },
+      { longitude: -46.61, latitude: -23.5, radiusMeters: 250 },
+    ]);
+    expect(tooMany).toBe(false);
+    const many = Array.from({ length: 501 }, (_, i) => [i / 1000, 0]);
+    expect(offerCoveragePoints(many).tooMany).toBe(true);
+  });
+
+  it("une os círculos de CTOs vizinhas e separa as afastadas (prévia)", () => {
     const areas = coverageFromCtos([[0, 0], [0.001, 0], [0.02, 0]]);
     expect(areas).toHaveLength(2);
     // A área unida alcança ~250 m a oeste da primeira CTO e a leste da segunda.

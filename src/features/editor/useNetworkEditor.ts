@@ -15,47 +15,61 @@ import { detachNodes, followNode, snapCable, type Projector } from "./topology";
 
 const OVERLAY_SOURCE = "neutra-overlay";
 const SHARED_COLOR = "#7c3aed";
-const FEASIBILITY_COLOR = "#0369a1";
+const NEARBY_COLOR = "#0369a1";
 const byRole = (role: string) => ["==", ["get", "role"], role];
 
 const OVERLAY_LAYERS: mapboxgl.LayerSpecification[] = [
   {
-    id: "neutra-feasibility-radius",
+    id: "neutra-nearby-radius",
     type: "fill",
     source: OVERLAY_SOURCE,
     filter: byRole("radius"),
-    paint: { "fill-color": FEASIBILITY_COLOR, "fill-opacity": 0.08 },
+    paint: { "fill-color": NEARBY_COLOR, "fill-opacity": 0.08 },
   },
   {
-    id: "neutra-feasibility-radius-line",
+    id: "neutra-nearby-radius-line",
     type: "line",
     source: OVERLAY_SOURCE,
     filter: byRole("radius"),
-    paint: { "line-color": FEASIBILITY_COLOR, "line-width": 1.5, "line-dasharray": [3, 2] },
+    paint: { "line-color": NEARBY_COLOR, "line-width": 1.5, "line-dasharray": [3, 2] },
   },
   {
-    id: "neutra-feasibility-link",
+    id: "neutra-nearby-link",
     type: "line",
     source: OVERLAY_SOURCE,
     filter: byRole("link"),
     paint: {
-      "line-color": FEASIBILITY_COLOR,
+      "line-color": NEARBY_COLOR,
       "line-width": 1.5,
       // CTO sem porta livre: linha apagada.
       "line-opacity": ["case", [">", ["get", "free"], 0], 0.9, 0.3],
     },
   },
   {
-    id: "neutra-feasibility-point",
+    id: "neutra-nearby-point",
     type: "circle",
     source: OVERLAY_SOURCE,
     filter: byRole("point"),
     paint: {
       "circle-radius": 6,
-      "circle-color": FEASIBILITY_COLOR,
+      "circle-color": NEARBY_COLOR,
       "circle-stroke-color": "#ffffff",
       "circle-stroke-width": 2,
     },
+  },
+  {
+    id: "neutra-offer-preview",
+    type: "fill",
+    source: OVERLAY_SOURCE,
+    filter: byRole("offer"),
+    paint: { "fill-color": SHARED_COLOR, "fill-opacity": 0.12 },
+  },
+  {
+    id: "neutra-offer-preview-line",
+    type: "line",
+    source: OVERLAY_SOURCE,
+    filter: byRole("offer"),
+    paint: { "line-color": SHARED_COLOR, "line-width": 1.5, "line-dasharray": [3, 2] },
   },
   {
     // Anel em volta da CTO com porta compartilhada; cheio quando há porta livre para ofertar.
@@ -101,7 +115,7 @@ export function useNetworkEditor(project: Project, accessToken: string) {
   const [ready, setReady] = useState(false);
   const commitRef = useRef<() => void>(() => {});
   // Camada de apoio por cima do Draw: anéis de CTO com porta compartilhada e o
-  // desenho da consulta de viabilidade.
+  // desenho das portas próximas ou da prévia da cobertura da oferta.
   const overlayRef = useRef<{ rings: Feature[]; extra: Feature[] }>({ rings: [], extra: [] });
   const renderOverlayRef = useRef<() => void>(() => {});
   const [picking, setPicking] = useState(false);
@@ -330,7 +344,7 @@ export function useNetworkEditor(project: Project, accessToken: string) {
     setSelectedId(null);
   }, []);
 
-  /** O próximo clique no mapa vira `pickedPoint` (consulta de viabilidade). */
+  /** O próximo clique no mapa vira `pickedPoint` (consulta de portas próximas). */
   const startPicking = useCallback(() => {
     const draw = drawRef.current;
     const map = mapRef.current;
@@ -352,7 +366,7 @@ export function useNetworkEditor(project: Project, accessToken: string) {
     if (map) map.getCanvas().style.cursor = "";
   }, []);
 
-  /** Desenho de apoio no mapa (raio e linhas da viabilidade); `[]` apaga. */
+  /** Desenho de apoio no mapa (portas próximas, prévia da oferta); `[]` apaga. */
   const setOverlay = useCallback((extra: Feature[]) => {
     overlayRef.current.extra = extra;
     renderOverlayRef.current();

@@ -7,6 +7,8 @@ empresas. Referência de produto: Geosite Telecom.
 **Use o vocabulário de `GLOSSARY.md`** em código, interface e documentos. Em
 particular: Empresa (não "operadora" nem "provedor locatário"), Compartilhamento (não
 "cessão"), Ligação (não "conexão"), Assinante (não "cliente"), CTO e CEO (não "caixa").
+**Viabilidade é da geo** (ponto na cobertura da oferta); o editor nunca calcula nem
+chama de viabilidade a busca por porta livre — essa é "portas próximas".
 
 @AGENTS.md
 
@@ -60,7 +62,7 @@ src/features/editor/    editor de mapa (Mapbox GL Draw) e seus painéis
   network.ts            grafo físico: rota até o POP, impacto, pendências
 src/domain/opticalGraph.ts  grafo óptico: fibras, conexões, rastreamento até a PON
 src/features/diagram/   diagrama de ligações por nó: modelo, layout e desenho (SVG)
-src/features/neutral/    rede neutra: estoque de portas compartilhadas e viabilidade
+src/features/neutral/    rede neutra: portas compartilhadas, portas próximas, pontos da oferta
 src/features/import/    importação de KML/KMZ: leitura, classificação, revisão, montagem
 src/features/projects/  lista e criação de projetos
 src/lib/storage.ts      única porta de entrada para persistência (hoje localStorage)

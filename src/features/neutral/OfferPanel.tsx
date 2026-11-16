@@ -4,8 +4,8 @@ import { useState } from "react";
 import type { Polygon } from "geojson";
 import type { Id } from "@/domain/types";
 import type { ElementFeature } from "@/features/editor/model";
-import { FEASIBILITY_RADIUS_METERS, networkInventory } from "./neutral";
-import { coverageFromCtos, draftOffer, inventoryCsv } from "./offer";
+import { networkInventory, SERVICE_RADIUS_METERS } from "./neutral";
+import { coverageFromCtos, draftOffer, inventoryCsv, MAX_COVERAGE_POINTS, offerCoveragePoints } from "./offer";
 
 const WHOLE_PROJECT = "";
 
@@ -19,20 +19,21 @@ function download(name: string, content: string, type: string) {
 }
 
 /**
- * O que a Empresa tem para ofertar: portas compartilhadas livres num escopo, a
- * área que elas atendem e a ocupação em planilha.
+ * O que a Empresa tem para ofertar: portas compartilhadas livres num escopo, os
+ * pontos que formam a cobertura da oferta e a ocupação em planilha.
  */
 export function OfferPanel({
   features,
   projectName,
   onSelect,
-  onCreateAreas,
+  onPreview,
   onClose,
 }: {
   features: ElementFeature[];
   projectName: string;
   onSelect: (id: Id) => void;
-  onCreateAreas: (areas: Polygon[]) => void;
+  /** Mostra (ou apaga, com `null`) a prévia da cobertura no mapa. */
+  onPreview: (areas: Polygon[] | null) => void;
   onClose: () => void;
 }) {
   const [areaId, setAreaId] = useState<Id>(WHOLE_PROJECT);
@@ -40,6 +41,9 @@ export function OfferPanel({
   // A área escolhida pode ter sido excluída enquanto o painel estava aberto.
   const scope = areas.some((area) => area.id === areaId) ? areaId : WHOLE_PROJECT;
   const draft = draftOffer(features, scope || undefined);
+  const positions = draft.ctos.map((cto) => cto.position);
+  const { points, tooMany } = offerCoveragePoints(positions);
+  const slug = projectName.replace(/[^\p{L}\p{N}]+/gu, "-").toLowerCase();
 
   return (
     <div className="flex flex-col gap-4">
@@ -93,18 +97,41 @@ export function OfferPanel({
               </li>
             ))}
           </ul>
-          <div>
-            <button
-              type="button"
-              onClick={() => onCreateAreas(coverageFromCtos(draft.ctos.map((cto) => cto.position)))}
-              className="w-full rounded-md bg-slate-900 px-2 py-1.5 text-sm font-medium text-white hover:bg-slate-700"
-            >
-              Gerar área de cobertura
-            </button>
-            <p className="mt-1 text-xs leading-relaxed text-slate-500">
-              Desenha a área a até {FEASIBILITY_RADIUS_METERS} m dessas CTOs. CTOs afastadas dão áreas separadas.
+          <section className="flex flex-col gap-2 border-t border-slate-200 pt-3">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Cobertura da oferta</h3>
+            <p className="text-xs leading-relaxed text-slate-600">
+              Um círculo de {SERVICE_RADIUS_METERS} m em volta de cada uma dessas CTOs. Na oferta, a geo une os círculos,
+              recorta nos polígonos do KMZ e passa a responder a viabilidade por essa área.
             </p>
-          </div>
+            {tooMany ? (
+              <p role="alert" className="text-xs text-red-700">
+                São {points.length} CTOs; a geo aceita até {MAX_COVERAGE_POINTS} pontos por oferta. Escolha uma área menor.
+              </p>
+            ) : (
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    download(
+                      `${slug}-cobertura-da-oferta.json`,
+                      JSON.stringify({ coverageNetworkPoints: points }, null, 2),
+                      "application/json",
+                    )
+                  }
+                  className="flex-1 rounded-md bg-slate-900 px-2 py-1.5 text-sm font-medium text-white hover:bg-slate-700"
+                >
+                  Baixar pontos ({points.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onPreview(coverageFromCtos(positions))}
+                  className="rounded-md border border-slate-300 px-2 py-1.5 text-sm text-slate-700 hover:bg-slate-100"
+                >
+                  Ver no mapa
+                </button>
+              </div>
+            )}
+          </section>
         </>
       )}
 
@@ -113,7 +140,7 @@ export function OfferPanel({
           type="button"
           onClick={() =>
             download(
-              `${projectName.replace(/[^\p{L}\p{N}]+/gu, "-").toLowerCase()}-ocupacao.csv`,
+              `${slug}-ocupacao.csv`,
               inventoryCsv(networkInventory(features)),
               "text/csv;charset=utf-8",
             )

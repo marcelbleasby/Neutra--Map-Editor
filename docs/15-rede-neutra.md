@@ -26,32 +26,48 @@ quem foi atingido.
 | Marcar porta compartilhada, uma a uma ou todas as livres de uma CTO | Painel da CTO |
 | Ver no mapa quais CTOs têm porta compartilhada (anel violeta; cheio quando há porta livre) | Mapa |
 | Estoque do projeto: portas livres para ofertar, CTOs com oferta, portas em uso por outras Empresas | Resumo do projeto, seção "Rede neutra" |
-| **Viabilidade** num ponto: CTOs a até 250 m com porta livre, separando próprias de compartilhadas, com a distância de cada uma | Botão "Viabilidade" |
-| Cobertura no mesmo ponto, para as duas perguntas não se confundirem | Mesmo painel |
+| **Portas próximas** de um ponto: CTOs a até 250 m com porta livre, separando próprias de compartilhadas, com a distância de cada uma | Botão "Portas próximas" |
 | Impacto de falha contando as portas compartilhadas atingidas | Painel de qualquer elemento |
 
 As regras estão em `src/features/neutral/` (`neutral.ts` e `offer.ts`), puras e
 testadas.
 
-A consulta de viabilidade responde a duas perguntas de uma vez:
+A consulta de portas próximas responde a duas perguntas de uma vez:
 
-- **Posso atender aqui?** — há porta própria livre no raio.
-- **Outra Empresa poderia atender aqui pela minha rede?** — há porta compartilhada
-  livre no raio. É a mesma pergunta que o marketplace precisa responder a quem compra.
+- **Consigo atender um assinante meu aqui?** — há porta própria livre no raio.
+- **Consigo atender um pedido de outra Empresa aqui?** — há porta compartilhada livre
+  no raio. Serve para confirmar antes de aceitar o pedido.
 
-## Ofertas — o que falta ligar
+Ela **não é a viabilidade**. Viabilidade é a geo que responde, pela cobertura da
+oferta (`docs/01-produto.md`).
 
-Hoje a oferta de CTO no marketplace tem `portCount` digitado e uma cobertura enviada
-à parte. O editor já tem os dois dados; falta a ponte.
+## Ofertas — a ponte com a geo
+
+A viabilidade que o comprador vê é calculada pela geo sobre a **cobertura da oferta**.
+Ao ligar a oferta à versão de KMZ, o Seller pode recortar a cobertura de três formas;
+uma delas é dar **pontos com raio** (`coverageNetworkPoints`): a geo desenha um círculo
+em cada ponto, une com a área enviada e recorta nos polígonos do KMZ.
+
+É aí que o editor entra: os pontos são as CTOs com porta compartilhada livre, com o
+raio de atendimento.
 
 | Passo | Situação |
 | --- | --- |
 | Somar as portas compartilhadas livres do projeto ou de dentro de uma área | Feito: botão "Portas para ofertar" |
-| Gerar a área de cobertura a partir dessas CTOs (união dos raios de 250 m; CTOs afastadas dão áreas separadas) | Feito, no mesmo painel |
+| Gerar os pontos da cobertura da oferta (`coverageNetworkPoints`, 250 m por CTO) e ver a prévia no mapa | Feito, no mesmo painel; baixa em JSON |
 | Baixar a ocupação por CTO em planilha (CSV) | Feito, no mesmo painel |
-| Enviar quantidade e área para uma oferta do marketplace | Depende do marketplace e do pedido G4 (`docs/13`) |
+| Enviar os pontos ao ligar a oferta à cobertura (`PUT .../productOffering/{id}/coverageVersion`) | Depende da integração com o marketplace |
 | Quando o pedido é aceito, indicar quais portas o atendem | Depende do pedido M1 |
-| Impedir que se oferte mais portas do que há livres | Depende dos dois anteriores |
+| Atualizar a cobertura quando as portas acabam ou novas são compartilhadas | A decidir: a geo não muda a oferta sozinha |
+
+Cuidados que vêm da geo:
+
+- O centro de cada ponto precisa estar **dentro do KMZ**, e o círculo é recortado nos
+  polígonos dele. Uma versão de KMZ só com pontos e linhas não dá cobertura nenhuma.
+- São até 500 pontos por oferta, sem coordenadas repetidas, com raio de até 100 km.
+- A viabilidade da geo **não sabe de portas**: um ponto dentro da cobertura continua
+  viável mesmo que as portas daquela CTO tenham acabado. Por isso o Seller confirma
+  ao aceitar, e por isso a cobertura precisa acompanhar a ocupação.
 
 ## Monitoramento — o que o editor traz
 

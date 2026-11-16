@@ -13,13 +13,13 @@ import { ImportDialog } from "@/features/import/ImportDialog";
 import { buildOpticalModel, type OpticalData } from "@/features/diagram/model";
 import { NodeDiagram } from "@/features/diagram/NodeDiagram";
 import type { Polygon } from "geojson";
-import { FeasibilityPanel } from "@/features/neutral/FeasibilityPanel";
+import { NearbyPortsPanel } from "@/features/neutral/NearbyPortsPanel";
 import { OfferPanel } from "@/features/neutral/OfferPanel";
-import { checkFeasibility, feasibilityOverlay } from "@/features/neutral/neutral";
+import { findNearbyPorts, nearbyOverlay } from "@/features/neutral/neutral";
 import { getProject, loadOptical, saveOptical } from "@/lib/storage";
 import { computeRoutes } from "./network";
 import { Inspector } from "./Inspector";
-import { defaultProperties, type ElementFeature } from "./model";
+import type { ElementFeature } from "./model";
 import { Palette } from "./Palette";
 import { useNetworkEditor } from "./useNetworkEditor";
 
@@ -73,32 +73,16 @@ function Workspace({ project }: { project: Project }) {
     deleteSelected,
   } = useNetworkEditor(project, MAPBOX_TOKEN);
 
-  // Viabilidade: o ponto clicado é guardado; o resultado acompanha as edições da rede.
-  const feasibility = pickedPoint ? checkFeasibility(pickedPoint, features) : null;
-  useEffect(() => {
-    setOverlay(pickedPoint ? feasibilityOverlay(checkFeasibility(pickedPoint, features)) : []);
-  }, [pickedPoint, features, setOverlay]);
-
+  // Portas próximas: o ponto clicado é guardado; o resultado acompanha as edições da rede.
+  const nearby = pickedPoint ? findNearbyPorts(pickedPoint, features) : null;
   const [offerOpen, setOfferOpen] = useState(false);
-
-  /** Áreas geradas a partir das CTOs com porta para ofertar. */
-  function createCoverageAreas(areas: Polygon[]) {
-    const created: ElementFeature[] = [];
-    for (const geometry of areas) {
-      created.push({
-        type: "Feature",
-        id: crypto.randomUUID(),
-        geometry,
-        properties: { ...defaultProperties("coverage_area", [...features, ...created]), status: "active" },
-      });
-    }
-    addFeatures(created);
-    setNotice(
-      created.length === 1
-        ? `Área de cobertura criada: ${created[0].properties.name}.`
-        : `${created.length} áreas de cobertura criadas.`,
-    );
-  }
+  const [offerPreview, setOfferPreview] = useState<Polygon[] | null>(null);
+  useEffect(() => {
+    if (pickedPoint) setOverlay(nearbyOverlay(findNearbyPorts(pickedPoint, features)));
+    else if (offerOpen && offerPreview)
+      setOverlay(offerPreview.map((geometry) => ({ type: "Feature", properties: { role: "offer" }, geometry })));
+    else setOverlay([]);
+  }, [pickedPoint, features, offerOpen, offerPreview, setOverlay]);
 
   // Nível óptico: equipamentos e ligações dentro dos nós.
   const [optical, setOptical] = useState<OpticalData>(() => loadOptical(project.id));
@@ -170,14 +154,18 @@ function Workspace({ project }: { project: Project }) {
             picking ? "border-sky-700 bg-sky-700 text-white" : "border-slate-300 text-slate-700 hover:bg-slate-100"
           }`}
         >
-          {picking ? "Clique no mapa…" : "Viabilidade"}
+          {picking ? "Clique no mapa…" : "Portas próximas"}
         </button>
         <button
           type="button"
           aria-pressed={offerOpen}
           onClick={() => {
-            if (!offerOpen) clearSelection();
+            if (!offerOpen) {
+              clearSelection();
+              clearPicked();
+            }
             setOfferOpen(!offerOpen);
+            setOfferPreview(null);
           }}
           className={`rounded-md border px-2.5 py-1 text-sm ${
             offerOpen ? "border-violet-700 bg-violet-700 text-white" : "border-slate-300 text-slate-700 hover:bg-slate-100"
@@ -234,12 +222,15 @@ function Workspace({ project }: { project: Project }) {
               features={features}
               projectName={project.name}
               onSelect={selectElement}
-              onCreateAreas={createCoverageAreas}
-              onClose={() => setOfferOpen(false)}
+              onPreview={setOfferPreview}
+              onClose={() => {
+                setOfferOpen(false);
+                setOfferPreview(null);
+              }}
             />
-          ) : !selected && feasibility ? (
-            <FeasibilityPanel
-              result={feasibility}
+          ) : !selected && nearby ? (
+            <NearbyPortsPanel
+              result={nearby}
               onSelect={selectElement}
               onAgain={startPicking}
               onClose={clearPicked}

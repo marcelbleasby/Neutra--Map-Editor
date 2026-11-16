@@ -186,7 +186,8 @@ fibras, nó removido — são descartadas ao montar o modelo (`buildOpticalModel
 - Cada porta da CTO tem uma situação e pode ser marcada como **compartilhada**.
 - O resumo do projeto e o impacto de falha contam as portas compartilhadas, para a
   Empresa saber quando uma falha atinge quem usa a rede dela.
-- A fazer: consulta de viabilidade por endereço (CTOs com porta livre a até 250 m) e
+- Feito: consulta de portas próximas e pontos para a cobertura da oferta
+  (`docs/15-rede-neutra.md`). A fazer: busca por endereço e
   dizer com qual Empresa a porta está compartilhada, o que depende dos pedidos do
   marketplace (`docs/13-pedidos-a-outros-times.md`).
 

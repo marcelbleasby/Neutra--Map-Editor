@@ -1,9 +1,9 @@
 "use client";
 
 import type { Id } from "@/domain/types";
-import { FEASIBILITY_RADIUS_METERS, type Feasibility } from "./neutral";
+import { SERVICE_RADIUS_METERS, type NearbyPorts } from "./neutral";
 
-function Verdict({ ok, label, detail }: { ok: boolean; label: string; detail: string }) {
+function Answer({ ok, label, detail }: { ok: boolean; label: string; detail: string }) {
   return (
     <div className="flex items-start gap-2">
       <span
@@ -15,72 +15,70 @@ function Verdict({ ok, label, detail }: { ok: boolean; label: string; detail: st
         {ok ? "✓" : "–"}
       </span>
       <p className="text-sm">
-        <span className="font-medium text-slate-900">
-          {label}: {ok ? "sim" : "não"}
-        </span>
+        <span className="font-medium text-slate-900">{label}</span>
         <span className="block text-slate-600">{detail}</span>
       </p>
     </div>
   );
 }
 
-/** Resultado da consulta de viabilidade num ponto do mapa. */
-export function FeasibilityPanel({
+/** Resultado da consulta de portas próximas a um ponto do mapa. */
+export function NearbyPortsPanel({
   result,
   onSelect,
   onAgain,
   onClose,
 }: {
-  result: Feasibility;
+  result: NearbyPorts;
   onSelect: (id: Id) => void;
   onAgain: () => void;
   onClose: () => void;
 }) {
-  const ownFree = result.candidates.reduce((sum, cto) => sum + cto.ownFree, 0);
-  const sharedFree = result.candidates.reduce((sum, cto) => sum + cto.sharedFree, 0);
+  const ownFree = result.ctos.reduce((sum, cto) => sum + cto.ownFree, 0);
+  const sharedFree = result.ctos.reduce((sum, cto) => sum + cto.sharedFree, 0);
   const [lng, lat] = result.point;
 
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h2 className="text-sm font-semibold text-slate-900">Viabilidade</h2>
+        <h2 className="text-sm font-semibold text-slate-900">Portas próximas</h2>
         <p className="text-xs tabular-nums text-slate-500">
-          {lat.toFixed(5)}, {lng.toFixed(5)}
+          {lat.toFixed(5)}, {lng.toFixed(5)} · até {SERVICE_RADIUS_METERS} m em linha reta
         </p>
       </div>
 
       <div className="flex flex-col gap-3">
-        <Verdict
-          ok={result.viable}
-          label="Viabilidade"
+        <Answer
+          ok={result.ownAvailable}
+          label="Para um assinante seu"
           detail={
-            result.viable
-              ? `${ownFree} ${ownFree === 1 ? "porta própria livre" : "portas próprias livres"} a até ${FEASIBILITY_RADIUS_METERS} m.`
-              : `Nenhuma porta própria livre a até ${FEASIBILITY_RADIUS_METERS} m.`
+            result.ownAvailable
+              ? `${ownFree} ${ownFree === 1 ? "porta própria livre" : "portas próprias livres"}.`
+              : "Nenhuma porta própria livre."
           }
         />
-        <Verdict
-          ok={result.sharedViable}
-          label="Portas compartilhadas"
+        <Answer
+          ok={result.sharedAvailable}
+          label="Para um pedido de outra Empresa"
           detail={
-            result.sharedViable
-              ? `${sharedFree} ${sharedFree === 1 ? "livre" : "livres"} no raio: é o que outra Empresa poderia usar aqui.`
-              : "Nenhuma livre no raio."
+            result.sharedAvailable
+              ? `${sharedFree} ${sharedFree === 1 ? "porta compartilhada livre" : "portas compartilhadas livres"}.`
+              : "Nenhuma porta compartilhada livre."
           }
-        />
-        <Verdict
-          ok={result.covered}
-          label="Cobertura"
-          detail={result.covered ? "O ponto está dentro de uma área de cobertura." : "O ponto está fora das áreas de cobertura."}
         />
       </div>
 
+      <p className="rounded-md bg-slate-50 p-2 text-xs leading-relaxed text-slate-600">
+        Isto não é a viabilidade da plataforma. Viabilidade é a geo que responde: se o ponto está na cobertura da
+        oferta. Use esta consulta para confirmar que dá para atender, por exemplo antes de aceitar um pedido.
+      </p>
+
       <section className="border-t border-slate-200 pt-3">
         <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-          CTOs no raio ({result.candidates.length})
+          CTOs no raio ({result.ctos.length})
         </h3>
-        {result.candidates.length === 0 ? (
-          <p className="text-sm text-slate-500">Nenhuma CTO a até {FEASIBILITY_RADIUS_METERS} m, em linha reta.</p>
+        {result.ctos.length === 0 ? (
+          <p className="text-sm text-slate-500">Nenhuma CTO a até {SERVICE_RADIUS_METERS} m.</p>
         ) : (
           <table className="w-full text-sm">
             <thead>
@@ -96,7 +94,7 @@ export function FeasibilityPanel({
               </tr>
             </thead>
             <tbody>
-              {result.candidates.map((cto) => (
+              {result.ctos.map((cto) => (
                 <tr key={cto.id} className="border-t border-slate-100">
                   <td className="py-1">
                     <button type="button" onClick={() => onSelect(cto.id)} className="text-left text-blue-700 hover:underline">

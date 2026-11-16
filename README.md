@@ -25,10 +25,10 @@ Abra http://localhost:3000, crie um projeto e desenhe a rede.
 - Portas da CTO com situação, marcação de porta compartilhada e assinante.
 - Diagrama de ligações de cada POP, CEO e CTO: fibras em cor, OLT, DIO e splitters,
   ligação por clique e caminho do sinal até a porta PON.
-- Rede neutra: marcar portas compartilhadas, ver o estoque para ofertar e consultar a
-  viabilidade num ponto do mapa (CTOs com porta livre a até 250 m).
-- Portas para ofertar: soma das portas compartilhadas livres, área de cobertura gerada
-  a partir das CTOs e ocupação em planilha (CSV).
+- Rede neutra: marcar portas compartilhadas, ver o estoque para ofertar e consultar as
+  portas próximas de um ponto do mapa (CTOs com porta livre a até 250 m).
+- Portas para ofertar: soma das portas compartilhadas livres, pontos para a cobertura
+  da oferta no formato da geo (`coverageNetworkPoints`) e ocupação em planilha (CSV).
 - Topologia: caminho de cada ponto até o POP, o que cai se um elemento falhar (com as
   portas compartilhadas atingidas), orçamento óptico estimado e lista de pendências do desenho.
 - Resumo do projeto (contagem, metragem de cabo, ocupação de portas) e exportação GeoJSON.

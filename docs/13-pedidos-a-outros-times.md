@@ -9,7 +9,7 @@ vira pedido ao serviço dono. Esta é a lista, por ordem de quanto destrava.
 | --- | --- | --- | --- |
 | G1 | Tipos de ativo novos: POP, caixa subterrânea, reserva técnica, assinante; e cabo backbone, de distribuição e drop | Hoje só existem `cto`, `fiber_cable`, `splice_closure` e `pole`. Sem POP não há Topologia; sem o tipo do cabo não há regra de ligação | O tipo real vai num atributo livre, que a geo não valida |
 | G2 | Entidades de porta, fibra e ligação | É o que responde "de quem é esta porta" e "este assinante está em qual PON" (ADR 0002) | Ficam em atributos da feição (ADR 0007) |
-| G3 | Consulta de viabilidade: CTOs com porta livre num raio (250 m), devolvendo distância | Depende de G2. Hoje a *feasibility* é só ponto em polígono | O editor calcula sobre o projeto carregado |
+| G3 | Decidir se a viabilidade deve considerar porta livre | Hoje a viabilidade da geo é só ponto na cobertura da oferta; um ponto continua viável depois que as portas acabam, e o Seller descobre ao aceitar. É mudança de regra (RN-GEO-01), não só de código | O editor gera a cobertura a partir das CTOs com porta livre, e ela precisa ser refeita quando a ocupação muda |
 | G4 | Publicar um rascunho de cobertura como cobertura de oferta | Hoje não há rota. Sem ela, a rede do editor e o KMZ da oferta são dois arquivos que divergem | A Empresa mantém os dois à mão |
 | G5 | Conferir se as regras de ligação da topologia inferida batem com as do editor | A sugestão aceita num lado não pode virar pendência no outro (ADR 0006) | — |
 

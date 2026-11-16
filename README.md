@@ -48,3 +48,4 @@ Os dados ficam no `localStorage` do navegador. A integração com a plataforma N
 - [Fluxos de entrada: KML/KMZ e SNMP](docs/11-fluxos-de-entrada.md)
 - [Estado atual dos serviços da plataforma](docs/12-portal-da-plataforma.md)
 - [Pedidos a outros times](docs/13-pedidos-a-outros-times.md)
+- [Referência: Geosite Telecom](docs/14-referencia-geosite.md)

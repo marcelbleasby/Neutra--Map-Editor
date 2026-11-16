@@ -68,4 +68,4 @@ Depende dos pedidos G2, G3, G4 e M1.
 | --- | --- |
 | Ambientes | Só a homologação está documentada no portal; faltam as URLs de desenvolvimento e produção |
 | Mapa base | Hoje só ruas do Mapbox; avaliar satélite |
-| Produto de referência | O site do Geosite não estava acessível; comparar diagrama de ligações, viabilidade e uso em campo com o produto real |
+| Funcionalidades da referência | `docs/14-referencia-geosite.md` lista doze candidatas vindas do Geosite; falta decidir quais entram na Fase 3 |

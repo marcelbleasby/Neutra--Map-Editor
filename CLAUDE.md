@@ -35,6 +35,7 @@ aqui (ADR 0001). O estado atual dos serviços está em `docs/12`; o que falta ne
 | Vocabulário do produto | `GLOSSARY.md` |
 | Decisões difíceis de reverter | `docs/adr/` |
 | O que o editor precisa dos outros serviços | `docs/13-pedidos-a-outros-times.md` |
+| O que o Geosite faz e o que vale trazer | `docs/14-referencia-geosite.md` |
 
 `src/domain/types.ts` é a referência canônica das entidades. Se mudar uma entidade,
 atualize `docs/03-modelo-de-dados.md` no mesmo commit.

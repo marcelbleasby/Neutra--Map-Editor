@@ -66,13 +66,10 @@ Um endereço pode ter cobertura e não ter viabilidade.
 
 ## Referência: Geosite Telecom
 
-O Geosite Telecom é a referência de mercado para a parte de documentação de rede. O
-que é público sobre ele: plataforma web e mobile para documentar e projetar redes de
-fibra óptica, consulta de disponibilidade de atendimento e integração com ERP/CRM.
-
-> **A conferir.** O site `geositetelecom.com.br` não estava acessível quando este
-> documento foi escrito. Antes de detalhar diagrama de ligações, viabilidade e uso em
-> campo, comparar com o produto real.
+O Geosite Telecom é a referência de mercado para a parte de documentação de rede. A
+comparação funcionalidade a funcionalidade, feita sobre as notas de versão públicas
+dele, está em [`docs/14-referencia-geosite.md`](14-referencia-geosite.md), com a lista
+do que vale trazer.
 
 ## Fora do escopo
 

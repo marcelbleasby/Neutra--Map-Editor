@@ -72,7 +72,7 @@ export function buildFeatures(
   placemarks.forEach((placemark, index) => {
     const kind = kindOf(index);
     if (!kind || ELEMENTS[kind].geometry !== placemark.geometry.type) return;
-    const { fiberCount, portCount } = classifications[index];
+    const { fiberCount, portCount, restored } = classifications[index];
     const properties = defaultProperties(kind, []);
     // Só gera nome sequencial (que percorre todos os elementos) para quem veio sem nome.
     properties.name = placemark.name.trim() || nextName(kind, all);
@@ -81,6 +81,12 @@ export function buildFeatures(
     if (placemark.description.trim()) properties.notes = placemark.description.trim().slice(0, 500);
     if (isCableKind(kind) && fiberCount) properties.fiberCount = fiberCount;
     if (kind === "cto" && portCount) properties.ports = makeCtoPorts(portCount <= 8 ? 8 : 16);
+    // Arquivo gerado pelo editor: o que foi gravado vale mais que o padrão.
+    if (restored) {
+      for (const [key, value] of Object.entries(restored)) {
+        if (value !== undefined) Object.assign(properties, { [key]: value });
+      }
+    }
 
     const feature: ElementFeature = { type: "Feature", id: newId(), geometry: placemark.geometry, properties };
     all.push(feature);

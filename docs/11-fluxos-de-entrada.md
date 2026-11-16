@@ -5,6 +5,7 @@ Um projeto pode começar de três formas:
 | Como começa | Situação |
 | --- | --- |
 | Do zero, desenhando no mapa | Feito |
+| De um KMZ gerado pelo próprio editor (versão publicada) | Feito: tipos, portas e cabos voltam sem perda |
 | De um arquivo KML/KMZ | Feito |
 | Do SNMP, a partir dos equipamentos monitorados | Desenhado; depende de integração |
 

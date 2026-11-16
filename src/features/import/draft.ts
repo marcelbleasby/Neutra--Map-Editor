@@ -1,5 +1,6 @@
 import type { Id } from "@/domain/types";
 import { classifyPlacemark, groupPlacemarks, type Classification, type ImportGroup } from "./classify";
+import { FIELDS } from "@/features/publish/fields";
 import { parseKml, readKmlFile, type Placemark } from "./kml";
 
 /** Um arquivo lido e classificado, aguardando a revisão do usuário. */
@@ -11,7 +12,8 @@ export interface ImportDraft {
 }
 
 export async function prepareImport(file: File): Promise<ImportDraft> {
-  const placemarks = parseKml(await readKmlFile(file));
+  // O que o editor gerou sozinho num KMZ anterior (área atendida) é refeito ao publicar.
+  const placemarks = parseKml(await readKmlFile(file)).filter((placemark) => !placemark.data?.[FIELDS.generated]);
   if (placemarks.length === 0) throw new Error("O arquivo não tem pontos, linhas ou polígonos.");
   const classifications = placemarks.map(classifyPlacemark);
   return { fileName: file.name, placemarks, classifications, groups: groupPlacemarks(placemarks, classifications) };

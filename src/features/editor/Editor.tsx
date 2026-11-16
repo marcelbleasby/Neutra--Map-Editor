@@ -13,6 +13,7 @@ import { ImportDialog } from "@/features/import/ImportDialog";
 import { buildOpticalModel, type OpticalData } from "@/features/diagram/model";
 import { NodeDiagram } from "@/features/diagram/NodeDiagram";
 import type { Polygon } from "geojson";
+import { buildKmz, MAX_KMZ_BYTES } from "@/features/publish/kmz";
 import { NearbyPortsPanel } from "@/features/neutral/NearbyPortsPanel";
 import { OfferPanel } from "@/features/neutral/OfferPanel";
 import { findNearbyPorts, nearbyOverlay } from "@/features/neutral/neutral";
@@ -39,16 +40,19 @@ function Notice({ title, children }: { title: string; children: React.ReactNode 
   );
 }
 
-function exportGeoJson(project: Project, features: ElementFeature[]) {
-  const blob = new Blob([JSON.stringify({ type: "FeatureCollection", features }, null, 2)], {
-    type: "application/geo+json",
-  });
-  const url = URL.createObjectURL(blob);
+function downloadKmz(project: Project, features: ElementFeature[]): string {
+  const { kmz, summary } = buildKmz(project.name, features);
+  if (kmz.byteLength > MAX_KMZ_BYTES) return "O KMZ passou de 50 MB, o limite da plataforma. Divida o projeto.";
+  const url = URL.createObjectURL(new Blob([kmz as BlobPart], { type: "application/vnd.google-earth.kmz" }));
   const link = document.createElement("a");
   link.href = url;
-  link.download = `${project.name.replace(/[^\p{L}\p{N}]+/gu, "-").toLowerCase()}.geojson`;
+  link.download = `${project.name.replace(/[^\p{L}\p{N}]+/gu, "-").toLowerCase()}.kmz`;
   link.click();
   URL.revokeObjectURL(url);
+  if (summary.polygons === 0) {
+    return "KMZ gerado sem nenhum polígono: na plataforma ele não dá cobertura. Posicione CTOs ou desenhe uma área de cobertura.";
+  }
+  return `KMZ gerado com ${summary.elements} elementos e ${summary.polygons} ${summary.polygons === 1 ? "polígono" : "polígonos"}. Para publicar, envie como nova versão do arquivo na plataforma.`;
 }
 
 function Workspace({ project }: { project: Project }) {
@@ -182,10 +186,10 @@ function Workspace({ project }: { project: Project }) {
         </button>
         <button
           type="button"
-          onClick={() => exportGeoJson(project, features)}
+          onClick={() => setNotice(downloadKmz(project, features))}
           className="rounded-md border border-slate-300 px-2.5 py-1 text-sm text-slate-700 hover:bg-slate-100"
         >
-          Exportar GeoJSON
+          Gerar KMZ
         </button>
       </header>
       <div className="flex min-h-0 flex-1">
@@ -198,7 +202,7 @@ function Workspace({ project }: { project: Project }) {
             <div ref={containerRef} className="size-full" />
           </div>
           <div className="pointer-events-none absolute inset-x-3 top-3 flex flex-col gap-2">
-            {[mapError, importError, saveFailed || opticalSaveFailed ? "A rede não coube no armazenamento do navegador: as alterações desta sessão não estão sendo salvas. Exporte o GeoJSON para não perder o trabalho." : null]
+            {[mapError, importError, saveFailed || opticalSaveFailed ? "A rede não coube no armazenamento do navegador: as alterações desta sessão não estão sendo salvas. Gere o KMZ para não perder o trabalho." : null]
               .filter(Boolean)
               .map((message) => (
                 <p key={message} role="alert" className="rounded-md bg-red-600 px-3 py-2 text-sm text-white shadow">

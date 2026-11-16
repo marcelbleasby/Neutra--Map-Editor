@@ -1,5 +1,7 @@
 import { ELEMENTS } from "@/domain/catalog";
-import type { ElementKind } from "@/domain/types";
+import type { ElementKind, LifecycleStatus } from "@/domain/types";
+import type { CtoPort, ElementProperties } from "@/features/editor/model";
+import { FIELDS, readPortList } from "@/features/publish/fields";
 import type { Placemark } from "./kml";
 
 /**
@@ -17,6 +19,10 @@ export interface Classification {
   fiberCount?: number;
   /** Portas da CTO, quando a descrição informa ("Portas: 16"). */
   portCount?: number;
+  /** Propriedades restauradas de um KMZ gerado pelo editor. */
+  restored?: Partial<ElementProperties>;
+  /** O tipo veio declarado no arquivo, não adivinhado pelo nome. */
+  explicit?: boolean;
 }
 
 /** Maiúsculas, sem acento e com separadores virando espaço. */
@@ -66,7 +72,57 @@ function classifyLine(name: string, folders: string): Classification {
   return { kind: null, fiberCount };
 }
 
+/** Tipos de ativo da geo (`asset_type` do esquema `neutra-assets-v1`). */
+const ASSET_TYPE_KIND: Record<string, ElementKind> = {
+  cto: "cto",
+  splice_closure: "ceo",
+  pole: "pole",
+  coverage_area: "coverage_area",
+  fiber_cable: "cable_distribution",
+};
+
+const STATUSES: LifecycleStatus[] = ["planned", "in_construction", "active", "decommissioned"];
+
+/** Portas da CTO a partir dos campos que o editor grava no KMZ. */
+function restorePorts(data: Record<string, string>): CtoPort[] | undefined {
+  const total = Number(data[FIELDS.ports]);
+  if (!Number.isInteger(total) || total < 1 || total > 64) return undefined;
+  const shared = new Set(readPortList(data[FIELDS.sharedPorts]));
+  const busy = new Set(readPortList(data[FIELDS.busyPorts]));
+  const reserved = new Set(readPortList(data[FIELDS.reservedPorts]));
+  const defective = new Set(readPortList(data[FIELDS.defectivePorts]));
+  return Array.from({ length: total }, (_, i): CtoPort => {
+    const index = i + 1;
+    const status = defective.has(index) ? "defective" : busy.has(index) ? "in_use" : reserved.has(index) ? "reserved" : "free";
+    return { index, status, ...(shared.has(index) ? { shared: true } : {}) };
+  });
+}
+
+/**
+ * Tipo declarado no arquivo: primeiro o do editor (`neutra_tipo`), que distingue
+ * POP, assinante e o tipo do cabo; depois o `asset_type` da geo.
+ */
+function declared(placemark: Placemark): Classification | null {
+  const data = placemark.data ?? {};
+  const own = data[FIELDS.kind] as ElementKind | undefined;
+  const fromAsset = ASSET_TYPE_KIND[data[FIELDS.assetType] ?? ""];
+  const kind = own && own in ELEMENTS ? own : fromAsset;
+  if (!kind || ELEMENTS[kind].geometry !== placemark.geometry.type) return null;
+
+  const restored: Partial<ElementProperties> = {};
+  const status = data[FIELDS.status] as LifecycleStatus;
+  if (STATUSES.includes(status)) restored.status = status;
+  const fibers = Number(data[FIELDS.fibers]);
+  if (Number.isInteger(fibers) && fibers > 0) restored.fiberCount = fibers;
+  const split = Number(data[FIELDS.split]);
+  if (kind === "ceo" && Number.isInteger(split) && split > 0) restored.splitRatio = split;
+  if (kind === "cto") restored.ports = restorePorts(data);
+  return { kind, explicit: true, restored };
+}
+
 export function classifyPlacemark(placemark: Placemark): Classification {
+  const fromFile = declared(placemark);
+  if (fromFile) return fromFile;
   const name = normalize(placemark.name);
   const folders = normalize(placemark.folders.join(" "));
 

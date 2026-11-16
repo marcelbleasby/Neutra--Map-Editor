@@ -70,7 +70,7 @@ _Avoid_: Mancha, área de atendimento, cobertura (sozinha)
 
 **Viabilidade**:
 Um ponto tem viabilidade para uma oferta quando está dentro da cobertura da oferta. Quem decide é a geo; cada consulta gera uma evidência que vale 300 s, e a Empresa dona da rede confirma ao aceitar o pedido.
-_Avoid_: Porta livre por perto, disponibilidade, cobertura
+_Avoid_: Porta livre por perto, cobertura
 
 **Raio de atendimento**:
 Distância em volta de uma CTO usada para montar a cobertura da oferta a partir de pontos da rede: 250 m, em linha reta.
@@ -78,7 +78,11 @@ _Avoid_: Raio de viabilidade, raio de proximidade
 
 **Portas próximas**:
 Consulta interna da Empresa: as CTOs com porta livre a até o raio de atendimento de um ponto. Ajuda a confirmar que dá para atender; não é viabilidade.
-_Avoid_: Viabilidade, disponibilidade
+_Avoid_: Viabilidade
+
+**Disponibilidade**:
+O que a Empresa tem para o marketplace num projeto publicado: as portas compartilhadas livres e a cobertura da oferta montada a partir das CTOs onde elas estão.
+_Avoid_: Estoque, capacidade ociosa
 
 **Área de cobertura**:
 Polígono desenhado no projeto. Sozinho não dá viabilidade: só conta quando faz parte da versão de KMZ ligada a uma oferta.
@@ -89,6 +93,14 @@ Quem é atendido por uma porta de CTO. No editor é apenas um nome ou código an
 _Avoid_: Cliente, usuário, consumidor
 
 ### Edição
+
+**Arquivo de cobertura**:
+A sequência de versões de KMZ de um Projeto na plataforma. Cada versão é imutável; a nova aponta para a anterior.
+_Avoid_: KMZ (para a sequência), mapa
+
+**Publicar**:
+Gerar o KMZ do Projeto e enviá-lo como nova versão do arquivo de cobertura. As ofertas só passam a usar a versão nova quando a Empresa aplica.
+_Avoid_: Salvar, exportar, sincronizar
 
 **Pendência**:
 Algo incompleto ou incorreto no desenho da rede física, que o editor aponta sem impedir o trabalho.

@@ -6,6 +6,38 @@ as três se apoiam: é ele que sabe quais portas existem, onde estão e de quem 
 
 O vocabulário está em `GLOSSARY.md`; as decisões, em `docs/adr/`.
 
+## O papel do editor
+
+O editor é **o ponto principal de gestão e controle da rede neutra da Empresa**: é
+nele que ela atualiza os seus arquivos e, ao publicar, já tem disponibilidade para o
+marketplace (ADR 0008).
+
+```
+ abrir o arquivo  ──▶  atualizar a rede  ──▶  publicar   ──▶  aplicar às ofertas
+ (versão atual)        e as portas            (nova versão)    (cobertura + portas)
+       ▲                                                              │
+       └──────────────────── a ocupação muda ◀────────────────────────┘
+```
+
+| Passo | Situação |
+| --- | --- |
+| Abrir um KMZ e continuar de onde parou | Feito: o KMZ gerado pelo editor volta com tipos, portas, splitter, fibras e cabos ligados |
+| Atualizar rede e portas | Feito |
+| Publicar: gerar o KMZ no formato da geo | Feito: botão "Gerar KMZ". Envio direto à geo depende da integração |
+| Aplicar às ofertas: pontos da cobertura e quantidade de portas | Os dados existem ("Portas para ofertar"); envio depende da integração |
+| Saber quais ofertas estão numa versão antiga | Depende da integração (`GET /coverageFile/{id}/offers`) |
+
+O KMZ gerado:
+
+- declara o tipo de cada elemento no esquema `neutra-assets-v1` (`cto`,
+  `splice_closure`, `pole`, `fiber_cable`, `coverage_area`), para a geo classificar
+  como declarado e não adivinhar;
+- leva em `ExtendedData` o que a geo não tem: POP, assinante, tipo do cabo, situação,
+  fibras, splitter e cada porta da CTO (em uso, reservada, com defeito, compartilhada);
+- leva sempre a **área atendida pela rede** — o raio de atendimento em volta de cada
+  CTO —, porque só polígono dá cobertura. Ela é marcada como gerada e refeita a cada
+  publicação.
+
 ## O ciclo
 
 ```

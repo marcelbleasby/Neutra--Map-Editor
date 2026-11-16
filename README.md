@@ -20,6 +20,8 @@ Abra http://localhost:3000, crie um projeto e desenhe a rede.
   cabos (backbone, distribuição, drop) e áreas de cobertura.
 - Cabos grudam nos nós ao serem desenhados e acompanham o nó quando ele é movido;
   comprimento calculado automaticamente.
+- Geração do KMZ no formato da geo, pronto para virar nova versão do arquivo de
+  cobertura; o mesmo KMZ reabre no editor sem perda.
 - Importação de KML/KMZ, na criação do projeto ou dentro do editor: os elementos são
   reconhecidos pelo nome, revisados em grupos e a topologia é montada automaticamente.
 - Portas da CTO com situação, marcação de porta compartilhada e assinante.

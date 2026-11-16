@@ -9,7 +9,10 @@ outros times, em [`docs/13-pedidos-a-outros-times.md`](13-pedidos-a-outros-times
 - Topologia física: encaixe de cabos, pontos de passagem, regras de ligação, rota até
   o POP, impacto de falha, orçamento óptico estimado e pendências.
 - Diagrama de ligações de POP, CEO e CTO, com rastreamento do sinal até a porta PON.
-- Importação de KML/KMZ com classificação pelo nome.
+- Importação de KML/KMZ com classificação pelo nome, e pelo tipo declarado quando o
+  arquivo foi gerado pelo editor.
+- Geração do KMZ no formato da geo (esquema `neutra-assets-v1`), com a área atendida
+  pela rede; o arquivo reabre no editor sem perda.
 - Portas de CTO com situação, compartilhamento e assinante.
 - Rede neutra: estoque de portas para ofertar, CTOs com porta compartilhada no mapa e
   consulta de portas próximas por ponto (`docs/15-rede-neutra.md`).
@@ -27,6 +30,9 @@ Não depende de nenhum pedido a outro time.
   editor (ADR 0004).
 - Permissões da interface pelo papel (`ROLE_ACCESS`).
 - Projetos como rascunhos de cobertura da geo (ADR 0003): criar, listar, abrir.
+- **Publicar** (ADR 0008): enviar o KMZ gerado como nova versão do arquivo de
+  cobertura, mostrar as ofertas que estão na versão anterior e aplicar a nova com os
+  pontos da cobertura.
 - Nós, cabos e áreas como feições do rascunho, com controle de versão por feição.
 - Carregamento por área visível do mapa. Resolve o limite atual de elementos no Draw:
   a rede passa a ser desenhada em camadas comuns e o Draw recebe só o que se edita.

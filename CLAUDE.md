@@ -1,8 +1,9 @@
 # Neutra Map Editor
 
-Editor de mapas onde um provedor (perfil Seller da plataforma Neutra+) documenta toda
-a sua rede FTTH, do POP à porta da CTO, e marca quais portas compartilha com outras
-empresas. Referência de produto: Geosite Telecom.
+Ponto principal de gestão e controle da rede neutra de um provedor (perfil Seller da
+plataforma Neutra+): ele documenta a rede FTTH, do POP à porta da CTO, marca quais
+portas compartilha e, ao publicar, gera a nova versão do arquivo de cobertura que o
+marketplace usa (ADR 0008). Referência de produto: Geosite Telecom.
 
 **Use o vocabulário de `GLOSSARY.md`** em código, interface e documentos. Em
 particular: Empresa (não "operadora" nem "provedor locatário"), Compartilhamento (não
@@ -63,6 +64,7 @@ src/features/editor/    editor de mapa (Mapbox GL Draw) e seus painéis
 src/domain/opticalGraph.ts  grafo óptico: fibras, conexões, rastreamento até a PON
 src/features/diagram/   diagrama de ligações por nó: modelo, layout e desenho (SVG)
 src/features/neutral/    rede neutra: portas compartilhadas, portas próximas, pontos da oferta
+src/features/publish/   KMZ no formato da geo (neutra-assets-v1) e campos que voltam na importação
 src/features/import/    importação de KML/KMZ: leitura, classificação, revisão, montagem
 src/features/projects/  lista e criação de projetos
 src/lib/storage.ts      única porta de entrada para persistência (hoje localStorage)

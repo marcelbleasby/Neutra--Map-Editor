@@ -8,6 +8,8 @@ export interface Placemark {
   /** Nomes das pastas que contêm o Placemark, da raiz para dentro. */
   folders: string[];
   geometry: Point | LineString | Polygon;
+  /** Campos de `ExtendedData` (`Data` e `SimpleData`), por nome. */
+  data?: Record<string, string>;
 }
 
 /** "lng,lat[,alt] lng,lat[,alt] …" → posições [lng, lat]; a altitude é descartada. */
@@ -45,6 +47,22 @@ function descendants(element: Element, localName: string): Element[] {
   return found;
 }
 
+/** `<Data name><value>` e `<SchemaData><SimpleData name>` do Placemark. */
+function extendedData(placemark: Element): Record<string, string> {
+  const data: Record<string, string> = {};
+  for (const block of Array.from(placemark.children).filter((child) => child.localName === "ExtendedData")) {
+    for (const item of descendants(block, "Data")) {
+      const name = item.getAttribute("name");
+      if (name) data[name] = childText(item, "value");
+    }
+    for (const item of descendants(block, "SimpleData")) {
+      const name = item.getAttribute("name");
+      if (name) data[name] = (item.textContent ?? "").trim();
+    }
+  }
+  return data;
+}
+
 function folderPath(placemark: Element): string[] {
   const names: string[] = [];
   for (let parent = placemark.parentElement; parent; parent = parent.parentElement) {
@@ -71,6 +89,7 @@ export function parseKml(text: string): Placemark[] {
       name: childText(element, "name"),
       description: childText(element, "description"),
       folders: folderPath(element),
+      data: extendedData(element),
     };
     const coordinatesOf = (geometry: Element) =>
       parseCoordinates(descendants(geometry, "coordinates")[0]?.textContent);

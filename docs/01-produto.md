@@ -5,8 +5,9 @@ reverter, em [`docs/adr/`](adr/).
 
 ## Em uma frase
 
-Um editor de mapas onde um provedor documenta toda a sua rede FTTH — do POP à porta
-da CTO — e marca quais portas compartilha com outras empresas pela plataforma Neutra+.
+O ponto principal de gestão e controle da rede neutra de um provedor: ele documenta a
+rede FTTH — do POP à porta da CTO —, marca quais portas compartilha e, ao publicar, já
+tem disponibilidade para o marketplace da plataforma Neutra+.
 
 ## Onde ele se encaixa
 
@@ -16,6 +17,7 @@ portas.
 
 O editor é a ferramenta do Seller para **manter a rede por trás dessas ofertas**:
 
+- abrir o arquivo da rede, atualizá-lo e publicar a nova versão (ADR 0008);
 - desenhar ou importar a rede e manter sua topologia correta;
 - saber, porta a porta, o que está livre, em uso, com defeito ou compartilhado;
 - montar a cobertura das ofertas a partir das CTOs com porta para compartilhar;
